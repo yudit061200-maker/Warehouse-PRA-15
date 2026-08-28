@@ -301,7 +301,7 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 w-full pb-10">
       {/* Top Banner Card: Clean, Minimalist, Modern */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">

@@ -4,7 +4,7 @@ import {
   LayoutDashboard,
   Boxes,
   ArrowDownLeft,
-  Barcode,
+  QrCode,
   Tag,
   FileSpreadsheet,
   X,
@@ -41,8 +41,8 @@ export const Navigation: React.FC<NavigationProps> = ({
       isHighlight: true,
     },
     { id: 'stock-in', label: 'Log Mutasi', icon: ArrowDownLeft },
-    { id: 'scanner', label: 'Pemindai Barcode', icon: Barcode },
-    { id: 'barcode-generator', label: 'Cetak Label Barcode', icon: Tag },
+    { id: 'scanner', label: 'Pemindai QR Code', icon: QrCode },
+    { id: 'barcode-generator', label: 'Cetak Sheet QR Code', icon: Tag },
     { id: 'reports', label: 'Laporan & Ekspor', icon: FileSpreadsheet },
   ];
 
@@ -53,7 +53,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <>
-      {/* Desktop / Tablet Sidebar: Clean, Sleek, Minimalist */}
+      {/* Desktop / Tablet Sidebar */}
       <aside className="hidden md:flex flex-col w-56 lg:w-64 shrink-0 bg-slate-950 text-slate-200 border-r border-slate-800/80 p-3.5 lg:p-4 space-y-5 lg:space-y-6 min-h-[calc(100vh-57px)]">
         {/* Brand Header */}
         <div className="px-2 py-2 border-b border-slate-800/80 flex items-center gap-2.5 lg:gap-3">
@@ -64,7 +64,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             <h1 className="text-xs lg:text-sm font-bold tracking-tight text-white leading-tight truncate">
               GudangPro
             </h1>
-            <p className="text-[9px] lg:text-[10px] text-slate-400 font-medium truncate">Inventory & Catalog</p>
+            <p className="text-[9px] lg:text-[10px] text-slate-400 font-medium truncate">Inventory & QR System</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             <span className="text-[10px] lg:text-[11px] text-slate-400 font-mono truncate">Online Ready</span>
           </div>
           <span className="text-[9px] lg:text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded shrink-0">
-            v2.4
+            v2.5
           </span>
         </div>
       </aside>
@@ -144,7 +144,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   </div>
                   <div>
                     <span className="font-bold text-white text-sm block leading-none">GudangPro</span>
-                    <span className="text-[10px] text-slate-400">Inventory System</span>
+                    <span className="text-[10px] text-slate-400">QR Inventory System</span>
                   </div>
                 </div>
                 <button
@@ -192,14 +192,14 @@ export const Navigation: React.FC<NavigationProps> = ({
             <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="font-mono text-slate-300 text-[11px]">Sistem Terhubung</span>
+                <span className="font-mono text-slate-300 text-[11px]">Sistem QR Aktif</span>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mobile Bottom Fixed Bar: Touch-Friendly & Ergonomic */}
+      {/* Mobile Bottom Fixed Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-around text-slate-400 shadow-2xl">
         <button
           onClick={() => onNavigateTab('dashboard')}
@@ -225,13 +225,13 @@ export const Navigation: React.FC<NavigationProps> = ({
         </button>
 
         <button
-          onClick={() => onNavigateTab('reference-catalog')}
+          onClick={() => onNavigateTab('scanner')}
           className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-[10px] font-medium transition-colors min-h-[44px] cursor-pointer ${
-            activeTab === 'reference-catalog' ? 'text-indigo-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'scanner' ? 'text-indigo-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Sparkles className="w-4 h-4 mb-0.5" />
-          <span>Pedoman</span>
+          <QrCode className="w-4 h-4 mb-0.5" />
+          <span>Scan QR</span>
         </button>
 
         <button

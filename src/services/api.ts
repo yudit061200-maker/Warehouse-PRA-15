@@ -138,6 +138,60 @@ export const api = {
     }
   },
 
+  async updateTransaction(
+    id: string,
+    data: Partial<Transaction>
+  ): Promise<{ transaction: Transaction; updatedItem?: InventoryItem }> {
+    try {
+      const result = await firestoreService.updateTransaction(id, data);
+      // Mirror to server in background
+      fetch(`${API_BASE}/transactions/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }).catch(() => {});
+      return result;
+    } catch (err) {
+      console.warn('Firestore updateTransaction failed, falling back to server API:', err);
+      const res = await fetch(`${API_BASE}/transactions/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Gagal memperbarui transaksi');
+      }
+      return json.data;
+    }
+  },
+
+  async deleteTransaction(id: string): Promise<{ deletedTx: Transaction; updatedItem?: InventoryItem }> {
+    let result: { deletedTx: Transaction; updatedItem?: InventoryItem } | null = null;
+    try {
+      result = await firestoreService.deleteTransaction(id);
+    } catch (err) {
+      console.warn('Firestore deleteTransaction notice:', err);
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/transactions/${id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.success && json.data && !result) {
+        result = json.data;
+      }
+    } catch (serverErr) {
+      console.warn('Server deleteTransaction notice:', serverErr);
+    }
+
+    if (result) {
+      return result;
+    }
+    throw new Error('Gagal menghapus transaksi dari database');
+  },
+
   // Analytics
   async getAnalytics(): Promise<WarehouseAnalytics> {
     try {

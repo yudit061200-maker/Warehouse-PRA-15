@@ -606,6 +606,110 @@ async function startServer() {
     }
   });
 
+  // Update transaction
+  app.put('/api/transactions/:id', (req, res) => {
+    try {
+      const { id } = req.params;
+      const txIndex = transactionData.findIndex((t) => t.id === id);
+      if (txIndex === -1) {
+        return res.status(404).json({ success: false, error: 'Transaksi tidak ditemukan' });
+      }
+
+      const existingTx = transactionData[txIndex];
+      const { quantity, referenceNumber, partner, notes, operator, timestamp, unitCost, type } = req.body;
+
+      const oldQty = existingTx.quantity;
+      const newQty = quantity !== undefined ? Math.max(1, Number(quantity)) : oldQty;
+      const oldType = existingTx.type;
+      const newType = type || oldType;
+
+      let updatedItem: ServerInventoryItem | undefined;
+      const item = inventoryData.find((i) => i.id === existingTx.itemId);
+
+      if (item) {
+        let revertedStock = item.quantity;
+        if (oldType === 'IN') revertedStock -= oldQty;
+        else if (oldType === 'OUT') revertedStock += oldQty;
+
+        let finalStock = revertedStock;
+        if (newType === 'IN') finalStock += newQty;
+        else if (newType === 'OUT') {
+          if (revertedStock < newQty) {
+            return res.status(400).json({
+              success: false,
+              error: `Stok tidak mencukupi! Tersisa: ${revertedStock} ${item.unit}, diminta keluar: ${newQty} ${item.unit}`,
+            });
+          }
+          finalStock -= newQty;
+        }
+
+        item.quantity = Math.max(0, finalStock);
+        item.lastUpdated = new Date().toISOString();
+        updatedItem = item;
+      }
+
+      const updatedTx: ServerTransaction = {
+        ...existingTx,
+        quantity: newQty,
+        type: newType,
+        referenceNumber: referenceNumber !== undefined ? referenceNumber.trim() : existingTx.referenceNumber,
+        partner: partner !== undefined ? partner.trim() : existingTx.partner,
+        notes: notes !== undefined ? notes.trim() : existingTx.notes,
+        operator: operator !== undefined ? operator.trim() : existingTx.operator,
+        timestamp: timestamp !== undefined ? timestamp : existingTx.timestamp,
+        unitCost: unitCost !== undefined ? Math.max(0, Number(unitCost)) : existingTx.unitCost,
+        newStock: updatedItem ? updatedItem.quantity : existingTx.newStock,
+      };
+
+      transactionData[txIndex] = updatedTx;
+
+      res.json({
+        success: true,
+        data: {
+          transaction: updatedTx,
+          updatedItem,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Delete transaction
+  app.delete('/api/transactions/:id', (req, res) => {
+    try {
+      const { id } = req.params;
+      const txIndex = transactionData.findIndex((t) => t.id === id);
+      if (txIndex === -1) {
+        return res.status(404).json({ success: false, error: 'Transaksi tidak ditemukan' });
+      }
+
+      const deletedTx = transactionData.splice(txIndex, 1)[0];
+      let updatedItem: ServerInventoryItem | undefined;
+
+      const item = inventoryData.find((i) => i.id === deletedTx.itemId);
+      if (item) {
+        if (deletedTx.type === 'IN') {
+          item.quantity = Math.max(0, item.quantity - deletedTx.quantity);
+        } else if (deletedTx.type === 'OUT') {
+          item.quantity = item.quantity + deletedTx.quantity;
+        }
+        item.lastUpdated = new Date().toISOString();
+        updatedItem = item;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          deletedTx,
+          updatedItem,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // Analytics endpoint
   app.get('/api/analytics', (req, res) => {
     try {

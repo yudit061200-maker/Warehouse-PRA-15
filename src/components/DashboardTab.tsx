@@ -52,7 +52,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
   const fastMoving = analytics?.fastMoving || [];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 w-full pb-10">
       {/* Top Banner with Quick Actions: Modern Minimalist Dark Slate */}
       <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 lg:p-7 border border-slate-800 shadow-xs relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">

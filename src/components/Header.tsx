@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { ActiveTab, InventoryItem } from '../types';
 import {
   Bell,
-  Cloud,
   RefreshCw,
-  Barcode,
+  QrCode,
   Menu,
   X,
   AlertTriangle,
@@ -45,9 +44,9 @@ export const Header: React.FC<HeaderProps> = ({
       case 'stock-out':
         return 'Log Mutasi Masuk & Keluar';
       case 'scanner':
-        return 'Pemindai Barcode / Kamera';
+        return 'Pemindai QR Code';
       case 'barcode-generator':
-        return 'Generator & Cetak Label';
+        return 'Studio Cetak Sheet QR Code';
       case 'reports':
         return 'Laporan & Ekspor Data';
       default:
@@ -56,8 +55,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-6 py-3 transition-all">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-6 py-3 transition-all w-full">
+      <div className="flex items-center justify-between w-full">
         {/* Left: Mobile Menu Trigger & Breadcrumbs */}
         <div className="flex items-center gap-3">
           {onToggleMobileMenu && (
@@ -85,12 +84,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Cloud Sync Status, Barcode Trigger, Low Stock Indicator & Profile */}
+        {/* Right: Cloud Sync Status, QR Code Trigger, Low Stock Indicator & Profile */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Cloud Sync Status Indicator */}
           <button
             onClick={onRefreshData}
-            title="Database terhubung langsung ke Firebase Firestore Cloud (Data permanen aman saat redeploy)"
+            title="Database terhubung langsung ke Firebase Firestore Cloud"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 text-slate-700 text-xs font-medium transition-colors cursor-pointer min-h-[36px]"
           >
             {isSyncing ? (
@@ -107,13 +106,13 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Quick Barcode Scanner button */}
+          {/* Quick QR Scanner button */}
           <button
             onClick={onQuickScan}
             className="px-2.5 sm:px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 min-h-[36px]"
           >
-            <Barcode className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Scan Cepat</span>
+            <QrCode className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Scan QR</span>
           </button>
 
           {/* Low Stock Alert Bell & Badge */}

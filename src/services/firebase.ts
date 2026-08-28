@@ -685,6 +685,134 @@ export const firestoreService = {
     }
   },
 
+  // Update existing Transaction (Inbound / Outbound) in Firestore
+  async updateTransaction(
+    id: string,
+    data: Partial<Transaction>
+  ): Promise<{ transaction: Transaction; updatedItem?: InventoryItem }> {
+    try {
+      const txDocRef = doc(db, TRANSACTIONS_COLLECTION, id);
+      const txSnap = await getDoc(txDocRef);
+      if (!txSnap.exists()) {
+        throw new Error('Data transaksi tidak ditemukan di database Firebase');
+      }
+
+      const existingTx = txSnap.data() as Transaction;
+      const oldQty = existingTx.quantity || 0;
+      const newQty = data.quantity !== undefined ? Math.max(1, Number(data.quantity)) : oldQty;
+      const oldType = existingTx.type;
+      const newType = data.type || oldType;
+
+      let updatedItem: InventoryItem | undefined;
+      const batch = writeBatch(db);
+
+      // If item exists, adjust stock with the difference
+      if (existingTx.itemId) {
+        const itemDocRef = doc(db, INVENTORY_COLLECTION, existingTx.itemId);
+        const itemSnap = await getDoc(itemDocRef);
+        if (itemSnap.exists()) {
+          const item = itemSnap.data() as InventoryItem;
+
+          // Revert old effect
+          let revertedStock = item.quantity;
+          if (oldType === 'IN') {
+            revertedStock -= oldQty;
+          } else if (oldType === 'OUT') {
+            revertedStock += oldQty;
+          }
+
+          // Apply new effect
+          let finalStock = revertedStock;
+          if (newType === 'IN') {
+            finalStock += newQty;
+          } else if (newType === 'OUT') {
+            if (revertedStock < newQty) {
+              throw new Error(
+                `Stok barang tidak mencukupi! Tersedia: ${revertedStock} ${item.unit}, diminta keluar: ${newQty} ${item.unit}`
+              );
+            }
+            finalStock -= newQty;
+          }
+
+          updatedItem = {
+            ...item,
+            quantity: Math.max(0, finalStock),
+            lastUpdated: new Date().toISOString(),
+          };
+
+          batch.set(itemDocRef, updatedItem);
+        }
+      }
+
+      const updatedTx: Transaction = {
+        ...existingTx,
+        quantity: newQty,
+        type: newType,
+        referenceNumber:
+          data.referenceNumber !== undefined ? data.referenceNumber.trim() : existingTx.referenceNumber,
+        partner: data.partner !== undefined ? data.partner.trim() : existingTx.partner,
+        notes: data.notes !== undefined ? data.notes.trim() : existingTx.notes,
+        operator: data.operator !== undefined ? data.operator.trim() : existingTx.operator,
+        timestamp: data.timestamp !== undefined ? data.timestamp : existingTx.timestamp,
+        unitCost: data.unitCost !== undefined ? Math.max(0, Number(data.unitCost)) : existingTx.unitCost,
+        newStock: updatedItem ? updatedItem.quantity : existingTx.newStock,
+      };
+
+      batch.set(txDocRef, updatedTx);
+      await batch.commit();
+
+      return { transaction: updatedTx, updatedItem };
+    } catch (err) {
+      console.error('Error updating transaction in Firestore:', err);
+      throw err;
+    }
+  },
+
+  // Delete Transaction (Inbound / Outbound) from Firestore
+  async deleteTransaction(id: string): Promise<{ deletedTx: Transaction; updatedItem?: InventoryItem }> {
+    try {
+      const txDocRef = doc(db, TRANSACTIONS_COLLECTION, id);
+      const txSnap = await getDoc(txDocRef);
+      if (!txSnap.exists()) {
+        throw new Error('Data transaksi tidak ditemukan di Firebase');
+      }
+
+      const txData = txSnap.data() as Transaction;
+      const batch = writeBatch(db);
+
+      let updatedItem: InventoryItem | undefined;
+      if (txData.itemId) {
+        const itemDocRef = doc(db, INVENTORY_COLLECTION, txData.itemId);
+        const itemSnap = await getDoc(itemDocRef);
+        if (itemSnap.exists()) {
+          const item = itemSnap.data() as InventoryItem;
+          let newStock = item.quantity;
+          if (txData.type === 'IN') {
+            newStock = Math.max(0, item.quantity - txData.quantity);
+          } else if (txData.type === 'OUT') {
+            newStock = item.quantity + txData.quantity;
+          }
+
+          updatedItem = {
+            ...item,
+            quantity: newStock,
+            lastUpdated: new Date().toISOString(),
+          };
+
+          batch.set(itemDocRef, updatedItem);
+        }
+      }
+
+      batch.delete(txDocRef);
+      await batch.commit();
+
+      return { deletedTx: txData, updatedItem };
+    } catch (err) {
+      console.error('Error deleting transaction in Firestore:', err);
+      throw err;
+    }
+  },
+
   // Calculate Warehouse Analytics from Firestore data
   async getAnalytics(): Promise<WarehouseAnalytics> {
     try {

@@ -19,7 +19,9 @@ import { BarcodeGeneratorModal } from './components/BarcodeGeneratorModal';
 import { ItemFormModal } from './components/ItemFormModal';
 import { TransactionModal } from './components/TransactionModal';
 import { QuickScanModal } from './components/QuickScanModal';
-import { Trash2, AlertTriangle, CheckCircle2, Info, X, Package } from 'lucide-react';
+import { EditTransactionModal } from './components/EditTransactionModal';
+import { DeleteTransactionModal } from './components/DeleteTransactionModal';
+import { Trash2, AlertTriangle, CheckCircle2, Info, X, Package, QrCode } from 'lucide-react';
 
 const LOCAL_STORAGE_ITEMS_KEY = 'gudangpro_inventory_items_cache';
 const LOCAL_STORAGE_TXS_KEY = 'gudangpro_transactions_cache';
@@ -63,6 +65,12 @@ export default function App() {
   const [barcodeGenItem, setBarcodeGenItem] = useState<InventoryItem | null>(null);
 
   const [isQuickScanOpen, setIsQuickScanOpen] = useState<boolean>(false);
+
+  // Transaction Edit & Delete Modals state
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [isUpdatingTx, setIsUpdatingTx] = useState<boolean>(false);
+  const [isDeletingTx, setIsDeletingTx] = useState<boolean>(false);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -227,6 +235,57 @@ export default function App() {
     });
   };
 
+  const handleUpdateTransaction = async (txId: string, updates: Partial<Transaction>) => {
+    try {
+      setIsUpdatingTx(true);
+      const res = await api.updateTransaction(txId, updates);
+      
+      // Update local item and transactions
+      if (res?.updatedItem) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === res.updatedItem!.id ? res.updatedItem! : i))
+        );
+      }
+      if (res?.transaction) {
+        setTransactions((prev) =>
+          prev.map((t) => (t.id === res.transaction.id ? res.transaction : t))
+        );
+      }
+      
+      setEditingTransaction(null);
+      showToast('Laporan mutasi transaksi berhasil diperbarui & stok disinkronkan!', 'success');
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal memperbarui transaksi', 'error');
+      throw err;
+    } finally {
+      setIsUpdatingTx(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (tx: Transaction) => {
+    try {
+      setIsDeletingTx(true);
+      const res = await api.deleteTransaction(tx.id);
+      
+      // Update local item and transactions
+      if (res?.updatedItem) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === res.updatedItem!.id ? res.updatedItem! : i))
+        );
+      }
+      setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
+      
+      setTransactionToDelete(null);
+      showToast(`Laporan transaksi ${tx.referenceNumber} berhasil dihapus & efek stok dibalikkan!`, 'success');
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menghapus transaksi', 'error');
+    } finally {
+      setIsDeletingTx(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Header */}
@@ -240,8 +299,8 @@ export default function App() {
         onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
 
-      {/* Main Layout Area */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto pb-20 md:pb-6">
+      {/* Main Layout Area - Full Width Responsive */}
+      <div className="flex-1 flex w-full pb-20 md:pb-6">
         {/* Responsive Sidebar Navigation */}
         <Navigation
           activeTab={activeTab}
@@ -338,13 +397,14 @@ export default function App() {
 
           {activeTab === 'barcode-generator' && (
             <div className="space-y-4">
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-lg md:text-xl font-bold text-slate-800">
-                    Generator & Cetak Label Barcode Gudang
+                  <h2 className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <QrCode className="w-5 h-5 text-indigo-600" />
+                    <span>Studio Cetak Sheet Label QR Code Gudang</span>
                   </h2>
                   <p className="text-xs md:text-sm text-slate-500 mt-1">
-                    Buat barcode otomatis format Code128 atau QR Code untuk ditempel pada barang, kardus, atau rak logistik.
+                    Cetak label QR Code satuan maupun masal multi-copy pada kertas A4 (12, 24, 40 label per lembar) atau printer thermal roll.
                   </p>
                 </div>
                 <button
@@ -352,32 +412,44 @@ export default function App() {
                     setBarcodeGenItem(null);
                     setIsBarcodeGenOpen(true);
                   }}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs transition-colors shrink-0 cursor-pointer"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all shrink-0 cursor-pointer flex items-center gap-2"
                 >
-                  Buka Studio Desain Barcode
+                  <QrCode className="w-4 h-4" />
+                  <span>Buka Studio Cetak QR</span>
                 </button>
               </div>
 
               {/* Grid of existing items to print directly */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-                <h3 className="text-sm font-bold text-slate-800">
-                  Daftar Label Barcode Barang Terdaftar
-                </h3>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Daftar Label QR Barang Terdaftar ({items.length})
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setBarcodeGenItem(null);
+                      setIsBarcodeGenOpen(true);
+                    }}
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+                  >
+                    + Cetak Semua Sekaligus
+                  </button>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {items.map((item) => (
                     <div
                       key={item.id}
-                      className="p-4 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-slate-50 flex flex-col justify-between space-y-3 transition-colors"
+                      className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 flex flex-col justify-between space-y-3 transition-colors"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-bold text-xs text-slate-900 line-clamp-1">{item.name}</span>
-                          <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-mono font-semibold">
+                          <span className="px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 text-[10px] font-mono font-semibold">
                             {item.location}
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                          SKU: {item.sku} • Barcode: {item.barcode}
+                          SKU: <strong className="text-indigo-600">{item.sku}</strong> • QR: {item.barcode}
                         </p>
                       </div>
 
@@ -386,9 +458,10 @@ export default function App() {
                           setBarcodeGenItem(item);
                           setIsBarcodeGenOpen(true);
                         }}
-                        className="w-full py-2 bg-white border border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        className="w-full py-2 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-indigo-700 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
-                        Pratinjau & Cetak Label
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Pratinjau & Cetak Label QR</span>
                       </button>
                     </div>
                   ))}
@@ -420,7 +493,16 @@ export default function App() {
           )}
 
           {activeTab === 'reports' && (
-            <ReportsTab items={items} transactions={transactions} />
+            <ReportsTab
+              items={items}
+              transactions={transactions}
+              onPrintQRCode={(item) => {
+                setBarcodeGenItem(item);
+                setIsBarcodeGenOpen(true);
+              }}
+              onEditTransaction={(tx) => setEditingTransaction(tx)}
+              onDeleteTransaction={(tx) => setTransactionToDelete(tx)}
+            />
           )}
         </main>
       </div>
@@ -558,6 +640,30 @@ export default function App() {
             setIsBarcodeGenOpen(true);
           }}
           onQuickMutate={handleQuickMutate}
+        />
+      )}
+
+      {/* Edit Transaction Modal */}
+      {editingTransaction && (
+        <EditTransactionModal
+          transaction={editingTransaction}
+          items={items}
+          isOpen={Boolean(editingTransaction)}
+          isSaving={isUpdatingTx}
+          onClose={() => setEditingTransaction(null)}
+          onSave={handleUpdateTransaction}
+        />
+      )}
+
+      {/* Delete Transaction Confirmation Modal */}
+      {transactionToDelete && (
+        <DeleteTransactionModal
+          transaction={transactionToDelete}
+          items={items}
+          isOpen={Boolean(transactionToDelete)}
+          isDeleting={isDeletingTx}
+          onClose={() => setTransactionToDelete(null)}
+          onConfirm={handleDeleteTransaction}
         />
       )}
 

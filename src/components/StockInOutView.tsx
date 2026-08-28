@@ -155,7 +155,7 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
     type === 'IN' ? currentStock + quantity : currentStock - quantity;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 w-full pb-10">
       {/* Top Banner & Mode Toggle */}
       <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
