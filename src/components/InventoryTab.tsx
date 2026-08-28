@@ -22,7 +22,7 @@ interface InventoryTabProps {
   items: InventoryItem[];
   onAddItem: () => void;
   onEditItem: (item: InventoryItem) => void;
-  onDeleteItem: (id: string) => void;
+  onDeleteItem: (item: InventoryItem) => void;
   onStockIn: (item: InventoryItem) => void;
   onStockOut: (item: InventoryItem) => void;
   onPrintBarcode: (item: InventoryItem) => void;
@@ -83,9 +83,9 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   return (
     <div className="space-y-5 max-w-7xl mx-auto pb-10">
       {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
-          <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900">
             Master Data Inventory & Stok
           </h2>
           <p className="text-xs md:text-sm text-slate-500 mt-0.5">
@@ -93,53 +93,53 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
           {/* Export Buttons */}
           <button
             onClick={() => exportInventoryToExcel(filteredItems)}
-            className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 sm:px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
             title="Download Excel"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Excel (.xlsx)</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="truncate">Excel (.xlsx)</span>
           </button>
           <button
             onClick={() => exportInventoryToPDF(filteredItems)}
-            className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-2.5 sm:px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
             title="Download PDF"
           >
-            <FileText className="w-4 h-4 text-rose-600" />
-            <span>Cetak PDF</span>
+            <FileText className="w-4 h-4 text-rose-600 shrink-0" />
+            <span className="truncate">Cetak PDF</span>
           </button>
 
           {/* Add Item Button */}
           <button
             onClick={onAddItem}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            className="col-span-2 sm:col-span-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer min-h-[38px]"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>Tambah Barang Baru</span>
           </button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
           {/* Search Box */}
-          <div className="relative">
+          <div className="relative sm:col-span-2 lg:col-span-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari SKU, Barcode, Nama Barang, Lokasi Rak..."
+              placeholder="Cari SKU, Barcode, Nama, Lokasi..."
               className="w-full pl-9 pr-8 py-2 text-xs md:text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-slate-900"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -165,10 +165,10 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
           </div>
 
           {/* Status Filter Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 sm:col-span-2 lg:col-span-1">
             <button
               onClick={() => setStockStatusFilter('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer min-h-[34px] ${
                 stockStatusFilter === 'ALL'
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -178,7 +178,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
             </button>
             <button
               onClick={() => setStockStatusFilter('LOW_STOCK')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 cursor-pointer min-h-[34px] ${
                 stockStatusFilter === 'LOW_STOCK'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
@@ -189,7 +189,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
             </button>
             <button
               onClick={() => setStockStatusFilter('OUT_OF_STOCK')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer min-h-[34px] ${
                 stockStatusFilter === 'OUT_OF_STOCK'
                   ? 'bg-slate-800 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -344,7 +344,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => onDeleteItem(item.id)}
+                              onClick={() => onDeleteItem(item)}
                               title="Hapus Barang"
                               className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             >
@@ -359,67 +359,110 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
               </table>
             </div>
 
-            {/* Mobile Cards */}
+            {/* Mobile Cards: Rich, Touch-Friendly for Smartphones & Small Screens */}
             <div className="md:hidden divide-y divide-slate-100">
-              {filteredItems.map((item) => (
-                <div key={item.id} className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
-                      <p className="text-[11px] text-indigo-700 font-mono font-semibold">
-                        SKU: {item.sku}
-                      </p>
+              {filteredItems.map((item) => {
+                const isOutOfStock = item.quantity === 0;
+                const isLowStock =
+                  item.quantity > 0 && item.quantity <= item.minStock;
+
+                return (
+                  <div key={item.id} className="p-4 space-y-3">
+                    {/* Top Row: Name, SKU, Status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 leading-snug break-words">
+                          {item.name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] text-indigo-700 font-mono font-bold">
+                            {item.sku}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {item.barcode}
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase shrink-0 ${
+                          isOutOfStock
+                            ? 'bg-rose-600 text-white shadow-xs'
+                            : isLowStock
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        }`}
+                      >
+                        {isOutOfStock
+                          ? 'HABIS'
+                          : `${item.quantity} ${item.unit}`}
+                      </span>
                     </div>
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                        item.quantity === 0
-                          ? 'bg-rose-600 text-white'
-                          : item.quantity <= item.minStock
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {item.quantity === 0
-                        ? 'HABIS'
-                        : `${item.quantity} ${item.unit}`}
-                    </span>
-                  </div>
 
-                  <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                    <span>Lokasi: {item.location}</span>
-                    <span className="font-mono font-semibold text-slate-800">
-                      {formatRupiah(item.unitPrice)}
-                    </span>
-                  </div>
+                    {/* Middle Info: Category, Location, Price */}
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-2.5 rounded-xl border border-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">Kategori & Lokasi</span>
+                        <div className="flex items-center gap-1 text-slate-700 font-medium text-[11px] mt-0.5 truncate">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{item.location} ({item.category})</span>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-100">
-                    <button
-                      onClick={() => onStockIn(item)}
-                      className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold"
-                    >
-                      + Masuk
-                    </button>
-                    <button
-                      onClick={() => onStockOut(item)}
-                      className="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg text-xs font-semibold"
-                    >
-                      - Keluar
-                    </button>
-                    <button
-                      onClick={() => onEditItem(item)}
-                      className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteItem(item.id)}
-                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 block font-medium">Harga / Total</span>
+                        <div className="font-mono text-slate-900 font-bold text-[11px] mt-0.5">
+                          {formatRupiah(item.unitPrice)}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          Tot: {formatRupiah(item.quantity * item.unitPrice)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Bar: Touch-Friendly Quick Buttons */}
+                    <div className="flex items-center justify-between gap-1.5 pt-1">
+                      <button
+                        onClick={() => onPrintBarcode(item)}
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer min-h-[36px]"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        <span className="text-[11px]">Label</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => onStockIn(item)}
+                          className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer min-h-[36px]"
+                        >
+                          <ArrowDownLeft className="w-3.5 h-3.5 shrink-0" />
+                          <span>Masuk</span>
+                        </button>
+                        <button
+                          onClick={() => onStockOut(item)}
+                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer min-h-[36px]"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                          <span>Keluar</span>
+                        </button>
+                        <button
+                          onClick={() => onEditItem(item)}
+                          title="Edit Barang"
+                          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteItem(item)}
+                          title="Hapus Barang"
+                          className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

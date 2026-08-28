@@ -290,8 +290,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ items, transactions }) =
           </div>
         </div>
 
-        {/* Transaction Table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-200/80">
+        {/* Transaction Table & Mobile Cards */}
+        {/* Desktop / Tablet View */}
+        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200/80">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200/80">
               <tr>
@@ -387,6 +388,67 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ items, transactions }) =
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Smartphone Mobile Cards */}
+        <div className="md:hidden divide-y divide-slate-100 border border-slate-200/80 rounded-xl overflow-hidden">
+          {filteredTransactions.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 p-4 text-xs">
+              Tidak ada transaksi yang cocok dengan filter.
+            </div>
+          ) : (
+            filteredTransactions.map((tx) => (
+              <div key={tx.id} className="p-3.5 space-y-2 bg-white">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-[11px] text-slate-400 block font-semibold">
+                      {tx.referenceNumber}
+                    </span>
+                    <h4 className="text-xs font-bold text-slate-900 mt-0.5 truncate">
+                      {tx.itemName}
+                    </h4>
+                    <span className="text-[10px] text-indigo-700 font-mono font-bold">
+                      SKU: {tx.itemSku}
+                    </span>
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase inline-flex items-center gap-1 shrink-0 ${
+                      tx.type === 'IN'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    {tx.type === 'IN' ? (
+                      <ArrowDownLeft className="w-3 h-3" />
+                    ) : (
+                      <ArrowUpRight className="w-3 h-3" />
+                    )}
+                    {tx.type === 'IN' ? `+${tx.quantity}` : `-${tx.quantity}`}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 p-2 rounded-lg text-slate-600">
+                  <div>
+                    <span className="text-[9px] text-slate-400 block font-medium">Stok Sebelum → Sesudah</span>
+                    <span className="font-mono font-semibold text-slate-800">
+                      {tx.previousStock} → <strong className="text-slate-950">{tx.newStock}</strong>
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-slate-400 block font-medium">Mitra / Petugas</span>
+                    <span className="truncate block font-medium">
+                      {tx.partner} ({tx.operator})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-[10px] text-slate-400 text-right">
+                  {formatDateTime(tx.timestamp)}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ActiveTab, InventoryItem, Transaction, TransactionType, WarehouseAnalytics, ReferenceItem } from './types';
 import { api } from './services/api';
+import { firestoreService } from './services/firebase';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { DashboardTab } from './components/DashboardTab';
@@ -18,6 +19,7 @@ import { BarcodeGeneratorModal } from './components/BarcodeGeneratorModal';
 import { ItemFormModal } from './components/ItemFormModal';
 import { TransactionModal } from './components/TransactionModal';
 import { QuickScanModal } from './components/QuickScanModal';
+import { Trash2, AlertTriangle, CheckCircle2, Info, X, Package } from 'lucide-react';
 
 const LOCAL_STORAGE_ITEMS_KEY = 'gudangpro_inventory_items_cache';
 const LOCAL_STORAGE_TXS_KEY = 'gudangpro_transactions_cache';
@@ -50,6 +52,8 @@ export default function App() {
   const [isAddItemOpen, setIsAddItemOpen] = useState<boolean>(false);
   const [selectedReferenceForNew, setSelectedReferenceForNew] = useState<ReferenceItem | null>(null);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [txModalType, setTxModalType] = useState<TransactionType>('IN');
@@ -59,6 +63,16 @@ export default function App() {
   const [barcodeGenItem, setBarcodeGenItem] = useState<InventoryItem | null>(null);
 
   const [isQuickScanOpen, setIsQuickScanOpen] = useState<boolean>(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast((prev) => (prev?.message === message ? null : prev));
+    }, 3500);
+  };
 
   // Fetch all cloud data
   const loadData = useCallback(async () => {
@@ -84,13 +98,36 @@ export default function App() {
     }
   }, []);
 
-  // Initial load and periodic background sync (every 15s)
+  // Initial load and real-time Firebase Firestore synchronization
   useEffect(() => {
     loadData();
+
+    // Set up real-time listener for Firestore Inventory
+    const unsubscribeInventory = firestoreService.subscribeInventory((liveItems) => {
+      if (Array.isArray(liveItems)) {
+        setItems(liveItems);
+        localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(liveItems));
+      }
+    });
+
+    // Set up real-time listener for Firestore Transactions
+    const unsubscribeTransactions = firestoreService.subscribeTransactions((liveTxs) => {
+      if (Array.isArray(liveTxs)) {
+        setTransactions(liveTxs);
+        localStorage.setItem(LOCAL_STORAGE_TXS_KEY, JSON.stringify(liveTxs));
+      }
+    });
+
+    // Periodic backup sync every 30s
     const interval = setInterval(() => {
       loadData();
-    }, 15000);
-    return () => clearInterval(interval);
+    }, 30000);
+
+    return () => {
+      unsubscribeInventory();
+      unsubscribeTransactions();
+      clearInterval(interval);
+    };
   }, [loadData]);
 
   // Derive categories list
@@ -101,23 +138,59 @@ export default function App() {
 
   // Handlers
   const handleSaveNewItem = async (itemData: Partial<InventoryItem>) => {
-    const newItem = await api.createItem(itemData);
-    setItems((prev) => [newItem, ...prev]);
-    loadData();
+    try {
+      const newItem = await api.createItem(itemData);
+      setItems((prev) => {
+        const next = [newItem, ...prev];
+        localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(next));
+        return next;
+      });
+      setIsAddItemOpen(false);
+      setSelectedReferenceForNew(null);
+      showToast(`Barang baru "${newItem.name}" (${newItem.sku}) berhasil didaftarkan!`, 'success');
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menambahkan barang', 'error');
+      throw err;
+    }
   };
 
   const handleUpdateItem = async (itemData: Partial<InventoryItem>) => {
     if (!editingItem) return;
-    const updated = await api.updateItem(editingItem.id, itemData);
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-    loadData();
+    try {
+      const updated = await api.updateItem(editingItem.id, itemData);
+      setItems((prev) => {
+        const next = prev.map((i) => (i.id === updated.id ? updated : i));
+        localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(next));
+        return next;
+      });
+      setEditingItem(null);
+      showToast(`Perubahan pada "${updated.name}" (${updated.sku}) berhasil disimpan!`, 'success');
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menyimpan perubahan barang', 'error');
+      throw err;
+    }
   };
 
-  const handleDeleteItem = async (id: string) => {
-    if (!window.confirm('Yakin ingin menghapus data barang ini dari inventory?')) return;
-    await api.deleteItem(id);
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    loadData();
+  const handleExecuteDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      setIsDeleting(true);
+      await api.deleteItem(itemToDelete.id);
+      setItems((prev) => {
+        const next = prev.filter((i) => i.id !== itemToDelete.id);
+        localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(next));
+        return next;
+      });
+      showToast(`Barang "${itemToDelete.name}" (${itemToDelete.sku}) berhasil dihapus dari Master Inventory.`, 'success');
+      setItemToDelete(null);
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menghapus barang dari server', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleRecordTransaction = async (data: {
@@ -212,7 +285,9 @@ export default function App() {
               onEditItem={(item) => {
                 setEditingItem(item);
               }}
-              onDeleteItem={handleDeleteItem}
+              onDeleteItem={(item) => {
+                setItemToDelete(item);
+              }}
               onStockIn={(item) => {
                 setTxModalType('IN');
                 setTxModalItem(item);
@@ -277,7 +352,7 @@ export default function App() {
                     setBarcodeGenItem(null);
                     setIsBarcodeGenOpen(true);
                   }}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs transition-colors shrink-0"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-xs transition-colors shrink-0 cursor-pointer"
                 >
                   Buka Studio Desain Barcode
                 </button>
@@ -311,7 +386,7 @@ export default function App() {
                           setBarcodeGenItem(item);
                           setIsBarcodeGenOpen(true);
                         }}
-                        className="w-full py-2 bg-white border border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                        className="w-full py-2 bg-white border border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         Pratinjau & Cetak Label
                       </button>
@@ -329,7 +404,6 @@ export default function App() {
                 setIsAddItemOpen(true);
               }}
               onQuickStockIn={(refItem) => {
-                // Check if item already registered in inventory by SKU / barcode
                 const existing = items.find(
                   (i) => i.sku === refItem.code || (refItem.barcode && i.barcode === refItem.barcode)
                 );
@@ -338,15 +412,8 @@ export default function App() {
                   setTxModalItem(existing);
                   setIsTxModalOpen(true);
                 } else {
-                  // Prompt to register first with autofill
-                  if (
-                    window.confirm(
-                      `Barang "${refItem.name}" (${refItem.code}) belum terdaftar di inventaris fisik aktif. Buka form pendaftaran dengan autofill sekarang?`
-                    )
-                  ) {
-                    setSelectedReferenceForNew(refItem);
-                    setIsAddItemOpen(true);
-                  }
+                  setSelectedReferenceForNew(refItem);
+                  setIsAddItemOpen(true);
                 }
               }}
             />
@@ -360,15 +427,71 @@ export default function App() {
 
       {/* MODALS */}
 
+      {/* Delete Item Confirmation Dialog */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200/80 p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">
+                  Hapus Barang dari Master Inventory?
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Data barang ini akan dihapus dari daftar master inventaris gudang aktif.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 text-xs">
+              <div className="font-bold text-slate-900 text-sm">{itemToDelete.name}</div>
+              <div className="grid grid-cols-2 gap-2 text-slate-500 text-[11px] pt-1 border-t border-slate-200/60 font-mono">
+                <div>
+                  SKU: <strong className="text-indigo-600">{itemToDelete.sku}</strong>
+                </div>
+                <div>
+                  Barcode: <strong>{itemToDelete.barcode}</strong>
+                </div>
+                <div>
+                  Stok Saat Ini: <strong className="text-slate-800">{itemToDelete.quantity} {itemToDelete.unit}</strong>
+                </div>
+                <div>
+                  Lokasi: <strong className="text-slate-800">{itemToDelete.location}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setItemToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleExecuteDelete}
+                className="px-4.5 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus Barang'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Item Modal */}
       {isAddItemOpen && (
         <ItemFormModal
           categories={categories}
           initialReferenceItem={selectedReferenceForNew}
-          onSave={async (data) => {
-            await handleSaveNewItem(data);
-            setSelectedReferenceForNew(null);
-          }}
+          onSave={handleSaveNewItem}
           onClose={() => {
             setIsAddItemOpen(false);
             setSelectedReferenceForNew(null);
@@ -436,6 +559,32 @@ export default function App() {
           }}
           onQuickMutate={handleQuickMutate}
         />
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-3 fade-in duration-200">
+          <div
+            className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-xs font-medium ${
+              toast.type === 'success'
+                ? 'bg-slate-900 text-white border-slate-800'
+                : toast.type === 'error'
+                ? 'bg-rose-900 text-white border-rose-800'
+                : 'bg-indigo-900 text-white border-indigo-800'
+            }`}
+          >
+            {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+            {toast.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-300 shrink-0" />}
+            {toast.type === 'info' && <Info className="w-4 h-4 text-indigo-300 shrink-0" />}
+            <span className="max-w-xs">{toast.message}</span>
+            <button
+              onClick={() => setToast(null)}
+              className="ml-2 text-white/60 hover:text-white p-0.5 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

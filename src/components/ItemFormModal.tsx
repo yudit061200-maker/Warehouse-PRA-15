@@ -58,40 +58,37 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
   const isEdit = !!item;
 
   const defaultItemCode =
-    initialReferenceItem?.code ||
     item?.sku ||
+    initialReferenceItem?.code ||
     generateItemCode(COMMON_CATEGORIES[0], 'Barang');
-  const [name, setName] = useState(
-    initialReferenceItem?.name || item?.name || ''
-  );
+
+  const [name, setName] = useState(item?.name || initialReferenceItem?.name || '');
   const [category, setCategory] = useState(
-    initialReferenceItem?.category || item?.category || COMMON_CATEGORIES[0]
+    item?.category || initialReferenceItem?.category || COMMON_CATEGORIES[0]
   );
-  const [sku, setSku] = useState(defaultItemCode);
+  const [sku, setSku] = useState(item?.sku || defaultItemCode);
   const [barcode, setBarcode] = useState(
-    initialReferenceItem?.barcode || item?.barcode || defaultItemCode
+    item?.barcode || initialReferenceItem?.barcode || defaultItemCode
   );
   const [quantity, setQuantity] = useState<number>(item?.quantity ?? 10);
   const [minStock, setMinStock] = useState<number>(
-    initialReferenceItem?.minStockRecommendation ?? item?.minStock ?? 10
+    item?.minStock ?? initialReferenceItem?.minStockRecommendation ?? 10
   );
-  const [unit, setUnit] = useState(
-    initialReferenceItem?.unit || item?.unit || 'pcs'
-  );
+  const [unit, setUnit] = useState(item?.unit || initialReferenceItem?.unit || 'pcs');
   const [unitPrice, setUnitPrice] = useState<number>(
-    initialReferenceItem?.standardPrice ?? item?.unitPrice ?? 50000
+    item?.unitPrice ?? initialReferenceItem?.standardPrice ?? 50000
   );
   const [location, setLocation] = useState(
-    initialReferenceItem?.defaultLocation || item?.location || 'Rak A-01'
+    item?.location || initialReferenceItem?.defaultLocation || 'Rak A-01'
   );
   const [supplier, setSupplier] = useState(
-    initialReferenceItem?.supplier || item?.supplier || ''
+    item?.supplier || initialReferenceItem?.supplier || ''
   );
   const [description, setDescription] = useState(
-    initialReferenceItem?.description || item?.description || ''
+    item?.description || initialReferenceItem?.description || ''
   );
   const [autofilledNotice, setAutofilledNotice] = useState<string | null>(
-    initialReferenceItem
+    initialReferenceItem && !item
       ? `Data dimuat dari katalog pedoman: ${initialReferenceItem.name}`
       : null
   );
@@ -100,11 +97,25 @@ export const ItemFormModal: React.FC<ItemFormModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Sync state when editing item changes
   useEffect(() => {
-    if (initialReferenceItem && !item) {
+    if (item) {
+      setName(item.name || '');
+      setCategory(item.category || COMMON_CATEGORIES[0]);
+      setSku(item.sku || '');
+      setBarcode(item.barcode || item.sku || '');
+      setQuantity(item.quantity ?? 0);
+      setMinStock(item.minStock ?? 10);
+      setUnit(item.unit || 'pcs');
+      setUnitPrice(item.unitPrice ?? 0);
+      setLocation(item.location || 'Rak A-01');
+      setSupplier(item.supplier || '');
+      setDescription(item.description || '');
+      setAutofilledNotice(null);
+    } else if (initialReferenceItem) {
       applyReferenceAutofill(initialReferenceItem);
     }
-  }, [initialReferenceItem]);
+  }, [item, initialReferenceItem]);
 
   const applyReferenceAutofill = (ref: ReferenceItem) => {
     setName(ref.name);

@@ -157,10 +157,10 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Top Banner & Mode Toggle */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
           <div>
-            <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900">
               Pos Mutasi Barang Gudang
             </h2>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5">
@@ -168,28 +168,28 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
             <button
               onClick={() => setType('IN')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[38px] ${
                 type === 'IN'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ArrowDownLeft className="w-4 h-4" />
-              Barang Masuk (IN)
+              <ArrowDownLeft className="w-4 h-4 shrink-0" />
+              <span>Masuk (IN)</span>
             </button>
             <button
               onClick={() => setType('OUT')}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[38px] ${
                 type === 'OUT'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ArrowUpRight className="w-4 h-4" />
-              Barang Keluar (OUT)
+              <ArrowUpRight className="w-4 h-4 shrink-0" />
+              <span>Keluar (OUT)</span>
             </button>
           </div>
         </div>

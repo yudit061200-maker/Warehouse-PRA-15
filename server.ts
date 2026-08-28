@@ -438,11 +438,56 @@ async function startServer() {
       }
 
       const item = inventoryData[index];
+      const {
+        name,
+        category,
+        sku,
+        barcode,
+        quantity,
+        minStock,
+        unit,
+        unitPrice,
+        location,
+        supplier,
+        description,
+      } = req.body;
+
+      // Validate name and sku if provided
+      if (name !== undefined && !String(name).trim()) {
+        return res.status(400).json({ success: false, error: 'Nama barang tidak boleh kosong' });
+      }
+      if (sku !== undefined && !String(sku).trim()) {
+        return res.status(400).json({ success: false, error: 'SKU / Kode barang tidak boleh kosong' });
+      }
+
+      // Check if SKU changed and already taken by another item
+      if (sku && String(sku).trim().toUpperCase() !== item.sku.toUpperCase()) {
+        const skuExists = inventoryData.find(
+          (i) => i.id !== id && i.sku.toLowerCase() === String(sku).trim().toLowerCase()
+        );
+        if (skuExists) {
+          return res.status(400).json({ success: false, error: `SKU '${sku}' sudah digunakan oleh barang lain` });
+        }
+      }
+
+      const finalSku = sku !== undefined ? String(sku).trim().toUpperCase() : item.sku;
+      const finalBarcode = barcode !== undefined && String(barcode).trim() !== ''
+        ? String(barcode).trim()
+        : finalSku;
+
       const updated: ServerInventoryItem = {
         ...item,
-        ...req.body,
-        id: item.id, // protect ID
-        sku: req.body.sku ? req.body.sku.toUpperCase() : item.sku,
+        name: name !== undefined ? String(name).trim() : item.name,
+        category: category !== undefined ? String(category).trim() : item.category,
+        sku: finalSku,
+        barcode: finalBarcode,
+        quantity: quantity !== undefined ? Math.max(0, Number(quantity) || 0) : item.quantity,
+        minStock: minStock !== undefined ? Math.max(0, Number(minStock) || 0) : item.minStock,
+        unit: unit !== undefined ? String(unit).trim() : item.unit,
+        unitPrice: unitPrice !== undefined ? Math.max(0, Number(unitPrice) || 0) : item.unitPrice,
+        location: location !== undefined ? String(location).trim() : item.location,
+        supplier: supplier !== undefined ? String(supplier).trim() : item.supplier,
+        description: description !== undefined ? String(description).trim() : item.description,
         lastUpdated: new Date().toISOString(),
       };
 

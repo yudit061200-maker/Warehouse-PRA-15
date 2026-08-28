@@ -78,6 +78,8 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
   // Modal for Manual Reference Item Add/Edit
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ReferenceItem | null>(null);
+  const [refItemToDelete, setRefItemToDelete] = useState<ReferenceItem | null>(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [formName, setFormName] = useState('');
   const [formCode, setFormCode] = useState('');
   const [formCategory, setFormCategory] = useState('');
@@ -128,14 +130,13 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
   };
 
   // Reset to Default seed
-  const handleResetDefault = () => {
-    if (window.confirm('Reset data katalog pedoman ke daftar standar bawaan?')) {
-      const reset = referenceService.resetToDefault();
-      setItems(reset);
-      setCurrentPage(1);
-      setSyncSuccessMsg('Data katalog acuan berhasil direset ke standar awal.');
-      setSyncErrorMsg(null);
-    }
+  const handleExecuteReset = () => {
+    const reset = referenceService.resetToDefault();
+    setItems(reset);
+    setCurrentPage(1);
+    setIsResetConfirmOpen(false);
+    setSyncSuccessMsg('Data katalog acuan berhasil direset ke standar awal.');
+    setSyncErrorMsg(null);
   };
 
   // Handle File Upload (.csv)
@@ -222,11 +223,16 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDeleteItem = (id: string) => {
-    if (window.confirm('Hapus item ini dari data acuan pedoman?')) {
-      referenceService.deleteReferenceItem(id);
-      reloadReferenceItems();
-    }
+  const handleDeleteItem = (item: ReferenceItem) => {
+    setRefItemToDelete(item);
+  };
+
+  const handleExecuteDeleteRef = () => {
+    if (!refItemToDelete) return;
+    referenceService.deleteReferenceItem(refItemToDelete.id);
+    reloadReferenceItems();
+    setSyncSuccessMsg(`Item pedoman "${refItemToDelete.name}" (${refItemToDelete.code}) berhasil dihapus.`);
+    setRefItemToDelete(null);
   };
 
   const handleOpenAddModal = () => {
@@ -405,8 +411,8 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
               {items.length.toLocaleString('id-ID')} Total Pedoman
             </span>
             <button
-              onClick={handleResetDefault}
-              title="Reset ke data awal"
+              onClick={() => setIsResetConfirmOpen(true)}
+              title="Reset ke data awal standar"
               className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -518,9 +524,10 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
         </div>
       </div>
 
-      {/* Main Reference Items Table */}
+      {/* Main Reference Items Table & Mobile Cards */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop / Tablet Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
@@ -635,7 +642,7 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
 
                           {/* Delete item */}
                           <button
-                            onClick={() => handleDeleteItem(item.id)}
+                            onClick={() => handleDeleteItem(item)}
                             title="Hapus dari daftar acuan"
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           >
@@ -649,6 +656,110 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Smartphone Mobile Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {paginatedItems.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 p-4">
+              <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-sm font-medium text-slate-600">Tidak ada data pedoman yang cocok</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Coba ganti kata kunci pencarian atau filter kategori.
+              </p>
+            </div>
+          ) : (
+            paginatedItems.map((item, index) => {
+              const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+              const isCopied = copiedId === item.id;
+
+              return (
+                <div key={item.id} className="p-4 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[10px] text-slate-400 font-mono">#{globalIndex}</span>
+                        <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                          {item.code}
+                        </span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 bg-slate-100 rounded-md">
+                          {item.unit || 'pcs'}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug break-words">
+                        {item.name}
+                      </h4>
+                      {item.description && item.description !== item.name && (
+                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <span className="text-[11px] font-medium text-slate-600 truncate">
+                      Kategori: <strong className="text-slate-800">{item.category || 'Umum'}</strong>
+                    </span>
+                    <span className="font-mono text-[10px] text-slate-500 flex items-center gap-1">
+                      <Barcode className="w-3 h-3 text-slate-400" />
+                      {item.barcode || item.code}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-1.5 pt-1">
+                    <button
+                      onClick={() => onUseForNewItem(item)}
+                      className="flex-1 py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs min-h-[36px]"
+                    >
+                      <PackagePlus className="w-3.5 h-3.5 shrink-0" />
+                      <span>Daftarkan ke Inventory</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {onQuickStockIn && (
+                        <button
+                          onClick={() => onQuickStockIn(item)}
+                          title="Mutasi Masuk"
+                          className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                        >
+                          <ArrowDownLeft className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleCopyDetail(item)}
+                        title="Salin rincian"
+                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      >
+                        {isCopied ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenEditModal(item)}
+                        title="Edit data"
+                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteItem(item)}
+                        title="Hapus data"
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Pagination Footer */}
@@ -688,6 +799,91 @@ export const ReferenceCatalogTab: React.FC<ReferenceCatalogTabProps> = ({
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {refItemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">
+                  Hapus Item dari Katalog Pedoman?
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Data acuan ini akan dihapus dari katalog pedoman master.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 text-xs">
+              <div className="font-bold text-slate-900">{refItemToDelete.name}</div>
+              <div className="text-[11px] text-slate-500 font-mono">
+                Kode: <strong className="text-indigo-600">{refItemToDelete.code}</strong> • Kategori: <strong>{refItemToDelete.category}</strong>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setRefItemToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteDeleteRef}
+                className="px-4.5 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Ya, Hapus Acuan</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {isResetConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">
+                  Reset Katalog ke Data Standar Bawaan?
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Semua penyesuaian lokal akan digantikan dengan 40+ daftar barang standar bawaan sistem.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsResetConfirmOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteReset}
+                className="px-4.5 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Ya, Reset Sekarang</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CSV Import Modal (Upload / Paste) */}
       {isImportModalOpen && (

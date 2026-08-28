@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "collection": "inventory",
+      "fields": {
+        "id": { "type": "string" },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "quantity": { "type": "number" },
+        "minStock": { "type": "number" },
+        "unit": { "type": "string" },
+        "unitPrice": { "type": "number" },
+        "location": { "type": "string" },
+        "supplier": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastUpdated": { "type": "string" }
+      }
+    },
+    "Transaction": {
+      "collection": "transactions",
+      "fields": {
+        "id": { "type": "string" },
+        "itemId": { "type": "string" },
+        "itemSku": { "type": "string" },
+        "itemName": { "type": "string" },
+        "type": { "type": "string" },
+        "quantity": { "type": "number" },
+        "previousStock": { "type": "number" },
+        "newStock": { "type": "number" },
+        "referenceNumber": { "type": "string" },
+        "partner": { "type": "string" },
+        "notes": { "type": "string" },
+        "operator": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "unitCost": { "type": "number" }
+      }
+    },
+    "ReferenceCatalog": {
+      "collection": "reference_catalog",
+      "fields": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "unit": { "type": "string" },
+        "barcode": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}

@@ -22,15 +22,15 @@ let inMemoryReferenceItems: ReferenceItem[] | null = null;
 export const referenceService = {
   // Get all reference items (from memory, local cache, or initial seed)
   getReferenceItems(): ReferenceItem[] {
-    if (inMemoryReferenceItems && inMemoryReferenceItems.length > 0) {
+    if (inMemoryReferenceItems !== null) {
       return inMemoryReferenceItems;
     }
 
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_REF_KEY);
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           inMemoryReferenceItems = parsed;
           return parsed;
         }
@@ -39,7 +39,7 @@ export const referenceService = {
       console.warn('Error reading reference items from storage:', e);
     }
 
-    // Initialize default seed
+    // Initialize default seed only on very first launch
     inMemoryReferenceItems = INITIAL_REFERENCE_ITEMS;
     this.saveReferenceItems(INITIAL_REFERENCE_ITEMS);
     return INITIAL_REFERENCE_ITEMS;
