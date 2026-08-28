@@ -1,0 +1,6 @@
+{
+  "name": "GudangPro - Warehouse Inventory System",
+  "description": "Sistem manajemen pergudangan cerdas terintegrasi Google Sheets untuk pedoman data acuan & autofill cepat, barcode scanner kamera, stock alert otomatis, dan analitik logistik.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
