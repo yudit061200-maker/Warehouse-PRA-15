@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 @media print {
+  @page {
+    margin: 4mm 4mm;
+    size: auto;
+  }
+
   /* 1. Reset root documents */
   html,
   body {
@@ -8,56 +13,62 @@
     color: #000000 !important;
     height: auto !important;
     min-height: 0 !important;
+    max-height: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
     overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* 2. Hide ALL application UI elements by default */
-  body * {
-    visibility: hidden !important;
-  }
-
-  /* 3. ONLY the printable sheet container and its descendants are visible */
-  #printable-sheet-area,
-  #printable-sheet-area * {
-    visibility: visible !important;
-  }
-
-  /* 4. Position the printable sheet area at the top-left of the physical paper */
-  #printable-sheet-area {
-    display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-    z-index: 9999999 !important;
-  }
-
-  /* Completely suppress everything outside the printable label sheet */
+  /* 2. Completely eliminate #root from layout flow (0 width, 0 height) */
+  #root,
+  .print\:hidden,
   header,
   nav,
   main,
   footer,
   aside,
-  #app-main-wrapper,
-  .print\:hidden {
+  #app-main-wrapper {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* 3. Hide any other elements on document.body except our print portal root */
+  body > *:not(#print-portal-root) {
     display: none !important;
   }
 
-  /* Avoid slicing labels across pages */
+  /* 4. Display the print portal container cleanly in normal document flow */
+  #print-portal-root {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    visibility: visible !important;
+  }
+
+  #print-portal-root * {
+    visibility: visible !important;
+  }
+
+  /* 5. Page breaks for multi-sheet batches */
   .break-inside-avoid,
   .page-break-inside-avoid {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
-  /* Page breaking for multi-sheet batches */
   .break-after-page,
   .page-break-after-always {
     break-after: page !important;

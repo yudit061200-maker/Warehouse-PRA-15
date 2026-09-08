@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { InventoryItem } from '../types';
 import { QRCodeRenderer } from './QRCodeRenderer';
 import { formatRupiah, generateItemCode } from '../utils/formatters';
@@ -32,7 +33,17 @@ import {
 } from 'lucide-react';
 
 export type LabelCategory = 'IN' | 'OUT' | 'GENERAL';
-export type SheetLayoutType = 'grid-24' | 'grid-12' | 'grid-40' | 'thermal';
+export type SheetLayoutType =
+  | 'auto'
+  | 'single-large'
+  | 'grid-2'
+  | 'grid-4'
+  | 'grid-6'
+  | 'grid-12'
+  | 'grid-24'
+  | 'grid-40'
+  | 'thermal'
+  | 'thermal-80';
 export type BatchQtyMode = 'custom' | 'uniform' | 'follow_stock';
 
 interface QRCodeGeneratorModalProps {
@@ -137,8 +148,8 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
   // Single / Uniform copies per item (default 1 label satuan)
   const [copiesPerItem, setCopiesPerItem] = useState<number>(1);
 
-  // Sheet layout
-  const [sheetLayout, setSheetLayout] = useState<SheetLayoutType>('grid-24');
+  // Sheet layout: default 'auto' so label size adapts dynamically to the desired quantity
+  const [sheetLayout, setSheetLayout] = useState<SheetLayoutType>('auto');
 
   // Toggleable elements on label
   const [labelConfig, setLabelConfig] = useState<LabelConfig>({
@@ -393,29 +404,75 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
     }, 1000);
   };
 
-  // Estimated sheets calculation
-  const getEstimatedSheets = () => {
-    const total = printItemsList.length;
-    if (sheetLayout === 'grid-24') return Math.ceil(total / 24);
-    if (sheetLayout === 'grid-12') return Math.ceil(total / 12);
-    if (sheetLayout === 'grid-40') return Math.ceil(total / 40);
-    return total; // thermal roll labels
-  };
+  // Effective layout: if 'auto', automatically adapt label size based on total items to print
+  const effectiveLayout: Exclude<SheetLayoutType, 'auto'> = useMemo(() => {
+    if (sheetLayout !== 'auto') return sheetLayout;
+    const count = printItemsList.length;
+    if (count === 1) return 'single-large';
+    if (count === 2) return 'grid-2';
+    if (count <= 4) return 'grid-4';
+    if (count <= 6) return 'grid-6';
+    if (count <= 12) return 'grid-12';
+    if (count <= 24) return 'grid-24';
+    return 'grid-40';
+  }, [sheetLayout, printItemsList.length]);
 
-  // Items per page based on layout format
+  // Items per page based on effective layout format
   const itemsPerPage = useMemo(() => {
-    switch (sheetLayout) {
+    switch (effectiveLayout) {
+      case 'single-large':
+        return 1;
+      case 'grid-2':
+        return 2;
+      case 'grid-4':
+        return 4;
+      case 'grid-6':
+        return 6;
       case 'grid-12':
         return 12;
       case 'grid-40':
         return 40;
       case 'thermal':
+      case 'thermal-80':
         return 1;
       case 'grid-24':
       default:
         return 24;
     }
-  }, [sheetLayout]);
+  }, [effectiveLayout]);
+
+  // Estimated sheets calculation
+  const getEstimatedSheets = () => {
+    const total = printItemsList.length;
+    if (effectiveLayout === 'thermal' || effectiveLayout === 'thermal-80' || effectiveLayout === 'single-large') {
+      return total;
+    }
+    return Math.ceil(total / itemsPerPage);
+  };
+
+  // Label description for layout name
+  const getLayoutLabel = (layout: Exclude<SheetLayoutType, 'auto'>) => {
+    switch (layout) {
+      case 'single-large':
+        return '1 Label Besar Box/Pallet (~155×105mm)';
+      case 'grid-2':
+        return '2 Label Besar A4 (~165×115mm)';
+      case 'grid-4':
+        return '4 Label Sedang A4 (~90×115mm)';
+      case 'grid-6':
+        return '6 Label Sedang A4 (~90×76mm)';
+      case 'grid-12':
+        return '12 Label Standar A4 (~92×40mm)';
+      case 'grid-24':
+        return '24 Label Standar Rak A4 (~63×31.5mm)';
+      case 'grid-40':
+        return '40 Label Ringkas A4 (~47×24mm)';
+      case 'thermal':
+        return 'Thermal Roll 50×40mm';
+      case 'thermal-80':
+        return 'Thermal Roll 80×50mm';
+    }
+  };
 
   // Split into physical print pages to prevent spillover and duplicate copies
   const pagedPrintItems = useMemo(() => {
@@ -426,191 +483,333 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
     return pages.length > 0 ? pages : [[]];
   }, [printItemsList, itemsPerPage]);
 
-  // Grid classes based on sheet layout
+  // Grid classes based on effective sheet layout
   const getGridClasses = () => {
-    switch (sheetLayout) {
+    switch (effectiveLayout) {
+      case 'single-large':
+        return 'flex flex-col items-center justify-center w-full';
+      case 'grid-2':
+        return 'grid grid-cols-1 gap-y-[5mm] w-full max-w-[175mm] mx-auto';
+      case 'grid-4':
+        return 'grid grid-cols-2 gap-x-[4mm] gap-y-[4mm] w-full max-w-[192mm] mx-auto';
+      case 'grid-6':
+        return 'grid grid-cols-2 gap-x-[4mm] gap-y-[3mm] w-full max-w-[192mm] mx-auto';
       case 'grid-12':
-        return 'grid grid-cols-2 gap-x-[3mm] gap-y-[2.5mm] w-full text-xs';
+        return 'grid grid-cols-2 gap-x-[3mm] gap-y-[2.5mm] w-full max-w-[195mm] mx-auto text-xs';
       case 'grid-40':
-        return 'grid grid-cols-4 gap-x-[1.2mm] gap-y-[1.2mm] w-full text-[7.5px]';
+        return 'grid grid-cols-4 gap-x-[1.2mm] gap-y-[1.2mm] w-full max-w-[198mm] mx-auto text-[7.5px]';
       case 'thermal':
+      case 'thermal-80':
         return 'flex flex-col gap-0 items-center justify-center w-full';
       case 'grid-24':
       default:
-        return 'grid grid-cols-3 gap-x-[2mm] gap-y-[1.8mm] w-full text-[8.5px]';
+        return 'grid grid-cols-3 gap-x-[2mm] gap-y-[1.8mm] w-full max-w-[198mm] mx-auto text-[8.5px]';
     }
   };
 
   const getQRSizeForLayout = () => {
-    switch (sheetLayout) {
+    switch (effectiveLayout) {
+      case 'single-large':
+        return 110;
+      case 'grid-2':
+        return 85;
+      case 'grid-4':
+        return 72;
+      case 'grid-6':
+        return 62;
       case 'grid-12':
-        return 65;
+        return 52;
       case 'grid-40':
-        return 34;
+        return 32;
       case 'thermal':
-        return 56;
+        return 48;
+      case 'thermal-80':
+        return 60;
       case 'grid-24':
       default:
-        return 46;
+        return 44;
+    }
+  };
+
+  const getPageStyle = () => {
+    if (effectiveLayout === 'thermal') {
+      return {
+        height: '38mm',
+        maxHeight: '38mm',
+        width: '48mm',
+        margin: '0 auto',
+        padding: 0,
+        boxSizing: 'border-box' as const,
+        overflow: 'hidden',
+      };
+    }
+    if (effectiveLayout === 'thermal-80') {
+      return {
+        height: '48mm',
+        maxHeight: '48mm',
+        width: '76mm',
+        margin: '0 auto',
+        padding: 0,
+        boxSizing: 'border-box' as const,
+        overflow: 'hidden',
+      };
+    }
+    if (effectiveLayout === 'single-large') {
+      return {
+        height: 'auto',
+        maxHeight: '135mm',
+        width: '100%',
+        margin: '0 auto',
+        padding: '6mm 0',
+        boxSizing: 'border-box' as const,
+        overflow: 'hidden',
+      };
+    }
+    if (effectiveLayout === 'grid-2') {
+      return {
+        height: 'auto',
+        maxHeight: '250mm',
+        width: '100%',
+        margin: '0 auto',
+        padding: '4mm 0',
+        boxSizing: 'border-box' as const,
+        overflow: 'hidden',
+      };
+    }
+    return {
+      height: 'auto',
+      maxHeight: '265mm',
+      width: '100%',
+      margin: '0 auto',
+      padding: 0,
+      boxSizing: 'border-box' as const,
+      overflow: 'hidden',
+    };
+  };
+
+  const getItemClasses = () => {
+    switch (effectiveLayout) {
+      case 'single-large':
+        return 'w-[155mm] h-[105mm] max-h-[110mm] border-2 border-black rounded-lg p-3 mx-auto';
+      case 'grid-2':
+        return 'w-full h-[115mm] max-h-[118mm] border-2 border-black rounded-md p-3 mx-auto';
+      case 'grid-4':
+        return 'w-full h-[115mm] max-h-[118mm] border-2 border-black rounded-md p-2.5 mx-auto';
+      case 'grid-6':
+        return 'w-full h-[76mm] max-h-[78mm] border border-black rounded-md p-2 mx-auto';
+      case 'grid-12':
+        return 'w-full h-[40mm] max-h-[41mm] border border-black rounded-sm p-[1.8mm]';
+      case 'grid-40':
+        return 'w-full h-[24mm] max-h-[24.5mm] border border-black rounded-xs p-[1mm]';
+      case 'thermal':
+        return 'w-[48mm] h-[38mm] max-h-[38mm] border border-black rounded-xs p-[1.5mm] mx-auto';
+      case 'thermal-80':
+        return 'w-[76mm] h-[48mm] max-h-[48mm] border border-black rounded-xs p-[2mm] mx-auto';
+      case 'grid-24':
+      default:
+        return 'w-full h-[31.5mm] max-h-[32mm] border border-black rounded-sm p-[1.2mm]';
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto print:static print:inset-auto print:p-0 print:m-0 print:bg-white print:overflow-visible">
+    <>
       {/* ========================================================= */}
-      {/* PRINTABLE SHEET CONTAINER (VISIBLE ONLY IN PRINT DIALOG) */}
+      {/* PRINTABLE PORTAL DIRECTLY AT DOCUMENT.BODY LEVEL          */}
+      {/* This ensures #root has display:none in print, preventing  */}
+      {/* layout flow overflow or duplicate 2nd page copies.        */}
       {/* ========================================================= */}
-      <div id="printable-sheet-area" className="hidden print:block w-full bg-white text-black p-0 m-0 print:static">
-        <style>{`
-          @media print {
-            @page {
-              size: ${sheetLayout === 'thermal' ? '50mm 40mm' : 'A4 portrait'};
-              margin: ${sheetLayout === 'thermal' ? '0mm' : '6mm 5mm'};
-            }
-          }
-        `}</style>
-        {pagedPrintItems.map((pageItems, pageIdx) => {
-          const isLastPage = pageIdx === pagedPrintItems.length - 1;
-          return (
-            <div
-              key={`print-page-${pageIdx}`}
-              className={`w-full bg-white text-black box-border ${
-                !isLastPage
-                  ? 'break-after-page page-break-after-always'
-                  : 'break-after-auto page-break-after-avoid'
-              }`}
-              style={{
-                height: sheetLayout === 'thermal' ? '38mm' : '274mm',
-                maxHeight: sheetLayout === 'thermal' ? '38mm' : '274mm',
-                overflow: 'hidden',
-                boxSizing: 'border-box',
-                margin: sheetLayout === 'thermal' ? '0 auto' : '0',
-                padding: 0,
-              }}
-            >
-              <div
-                className={getGridClasses()}
-                style={{
-                  height: sheetLayout === 'thermal' ? '38mm' : '274mm',
-                  maxHeight: sheetLayout === 'thermal' ? '38mm' : '274mm',
-                  overflow: 'hidden',
-                  boxSizing: 'border-box',
-                }}
-              >
-                {pageItems.map((it) => {
-                  const packInfo = getLabelContentQty(it);
-                  const partnerDisplay = partnerName || (it as any).supplier || '';
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <div id="print-portal-root" className="hidden print:block w-full bg-white text-black p-0 m-0 print:static">
+            <style>{`
+              @media print {
+                @page {
+                  size: ${
+                    effectiveLayout === 'thermal'
+                      ? '50mm 40mm'
+                      : effectiveLayout === 'thermal-80'
+                      ? '80mm 50mm'
+                      : 'A4 portrait'
+                  };
+                  margin: ${
+                    effectiveLayout.startsWith('thermal') ? '0mm' : '4mm 4mm'
+                  };
+                }
+              }
+            `}</style>
+            {pagedPrintItems.map((pageItems, pageIdx) => {
+              const isLastPage = pageIdx === pagedPrintItems.length - 1;
+              return (
+                <div
+                  key={`print-page-${pageIdx}`}
+                  className={`w-full bg-white text-black box-border ${
+                    !isLastPage
+                      ? 'break-after-page page-break-after-always'
+                      : 'break-after-auto page-break-after-avoid'
+                  }`}
+                  style={getPageStyle()}
+                >
+                  <div
+                    className={getGridClasses()}
+                    style={getPageStyle()}
+                  >
+                    {pageItems.map((it) => {
+                      const packInfo = getLabelContentQty(it);
+                      const isLarge = effectiveLayout === 'single-large';
+                      const isMedium = effectiveLayout === 'grid-2' || effectiveLayout === 'grid-4';
+                      const isMid = effectiveLayout === 'grid-6';
 
-                  return (
-                    <div
-                      key={it.uniqueKey}
-                      className={`border border-black rounded-sm flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${
-                        sheetLayout === 'thermal'
-                          ? 'w-[48mm] h-[38mm] max-h-[38mm] p-[1.5mm] mx-auto'
-                          : sheetLayout === 'grid-12'
-                          ? 'h-[42mm] max-h-[42mm] p-[2mm]'
-                          : sheetLayout === 'grid-40'
-                          ? 'h-[24.5mm] max-h-[24.5mm] p-[1mm]'
-                          : 'h-[32mm] max-h-[32mm] p-[1.2mm]'
-                      }`}
-                    >
-                      {/* Distinct Label Header for Inbound / Outbound / General */}
-                      <div className="w-full mb-0.5">
-                        {labelCategory === 'IN' ? (
-                          <div className="border-b border-black pb-0.5 flex items-center justify-between px-0.5">
-                            <span className="text-[7.5px] font-black uppercase tracking-wider text-black flex items-center gap-0.5 leading-none">
-                              <span>▼</span>
-                              <span>BARANG MASUK</span>
-                            </span>
-                            <span className="text-[6.5px] font-bold uppercase tracking-tight text-black border border-black px-0.5 rounded-xs leading-none">
-                              PENERIMAAN
-                            </span>
+                      return (
+                        <div
+                          key={it.uniqueKey}
+                          className={`border border-black rounded-sm flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${getItemClasses()}`}
+                        >
+                          {/* Distinct Label Header for Inbound / Outbound / General */}
+                          <div className={`w-full ${isLarge ? 'mb-1.5' : 'mb-0.5'}`}>
+                            {labelCategory === 'IN' ? (
+                              <div className={`border-b border-black pb-0.5 flex items-center justify-between px-0.5 ${isLarge ? 'border-b-2 pb-1' : ''}`}>
+                                <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : 'text-[7.5px] font-black'} uppercase tracking-wider text-black flex items-center gap-0.5 leading-none`}>
+                                  <span>▼</span>
+                                  <span>BARANG MASUK</span>
+                                </span>
+                                <span className={`${isLarge ? 'text-[10px] font-extrabold border-2' : isMedium ? 'text-[8px] font-bold border' : 'text-[6.5px] font-bold border'} uppercase tracking-tight text-black px-1 rounded-xs leading-none`}>
+                                  PENERIMAAN
+                                </span>
+                              </div>
+                            ) : labelCategory === 'OUT' ? (
+                              <div className={`border-b border-black pb-0.5 flex items-center justify-between px-0.5 ${isLarge ? 'border-b-2 pb-1' : ''}`}>
+                                <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : 'text-[7.5px] font-black'} uppercase tracking-wider text-black flex items-center gap-0.5 leading-none`}>
+                                  <span>▲</span>
+                                  <span>BARANG KELUAR</span>
+                                </span>
+                                <span className={`${isLarge ? 'text-[10px] font-extrabold border-2' : isMedium ? 'text-[8px] font-bold border' : 'text-[6.5px] font-bold border'} uppercase tracking-tight text-black px-1 rounded-xs leading-none`}>
+                                  PENGELUARAN / SJ
+                                </span>
+                              </div>
+                            ) : (
+                              labelConfig.showBrand && (
+                                <div className={`border-b border-black pb-0.5 flex items-center justify-between px-0.5 ${isLarge ? 'border-b-2 pb-1' : ''}`}>
+                                  <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : 'text-[7px] font-extrabold'} uppercase tracking-wider text-black leading-none`}>
+                                    PRA LOGISTICS
+                                  </span>
+                                  <span className={`${isLarge ? 'text-[10px] font-bold' : 'text-[6.5px] font-bold'} text-black font-mono leading-none`}>
+                                    RAK STOK
+                                  </span>
+                                </div>
+                              )
+                            )}
                           </div>
-                        ) : labelCategory === 'OUT' ? (
-                          <div className="border-b border-black pb-0.5 flex items-center justify-between px-0.5">
-                            <span className="text-[7.5px] font-black uppercase tracking-wider text-black flex items-center gap-0.5 leading-none">
-                              <span>▲</span>
-                              <span>BARANG KELUAR</span>
+
+                          {/* Item Name */}
+                          {labelConfig.showTitle && (
+                            <span
+                              className={`font-black leading-tight truncate w-full text-black ${
+                                isLarge
+                                  ? 'text-base line-clamp-2 my-0.5'
+                                  : isMedium
+                                  ? 'text-xs truncate my-0.5'
+                                  : isMid
+                                  ? 'text-[10px] truncate'
+                                  : effectiveLayout === 'grid-40'
+                                  ? 'text-[7.5px] truncate'
+                                  : 'text-[8.5px] truncate'
+                              }`}
+                            >
+                              {it.name}
                             </span>
-                            <span className="text-[6.5px] font-bold uppercase tracking-tight text-black border border-black px-0.5 rounded-xs leading-none">
-                              PENGELUARAN / SJ
-                            </span>
+                          )}
+
+                          {/* QR Code Renderer */}
+                          <div className="my-0.5 flex items-center justify-center shrink-0">
+                            <QRCodeRenderer
+                              value={it.encodedQr}
+                              size={getQRSizeForLayout()}
+                              includeMargin={false}
+                            />
                           </div>
-                        ) : (
-                          labelConfig.showBrand && (
-                            <div className="border-b border-black pb-0.5 flex items-center justify-between px-0.5">
-                              <span className="text-[7px] font-extrabold uppercase tracking-wider text-black leading-none">
-                                PRA LOGISTICS
+
+                          {/* Footer Details */}
+                          <div className={`w-full text-black ${isLarge ? 'space-y-1' : 'space-y-0.5'}`}>
+                            {labelConfig.showSku && (
+                              <span
+                                className={`font-mono font-black block leading-tight truncate ${
+                                  isLarge
+                                    ? 'text-sm tracking-widest'
+                                    : isMedium
+                                    ? 'text-xs tracking-wider'
+                                    : isMid
+                                    ? 'text-[9.5px] tracking-wider'
+                                    : effectiveLayout === 'grid-40'
+                                    ? 'text-[7px]'
+                                    : 'text-[8px] tracking-wider'
+                                }`}
+                              >
+                                {it.sku}
                               </span>
-                              <span className="text-[6.5px] font-bold text-black font-mono leading-none">RAK STOK</span>
+                            )}
+
+                            {/* Manual Quantity Content printed on label */}
+                            {labelConfig.showQuantity && (
+                              <div
+                                className={`font-mono font-bold border border-black/80 rounded-xs bg-slate-50 leading-tight ${
+                                  isLarge
+                                    ? 'text-xs py-1 px-3 border-2 my-1'
+                                    : isMedium
+                                    ? 'text-[9.5px] py-0.5 px-2 my-0.5'
+                                    : effectiveLayout === 'grid-40'
+                                    ? 'text-[6px] py-0.2 px-0.5'
+                                    : 'text-[6.5px] py-0.2 px-1 my-0.2'
+                                }`}
+                              >
+                                <span>ISI / JUMLAH: </span>
+                                <span className="font-black underline">{packInfo.text}</span>
+                              </div>
+                            )}
+
+                            {/* Document and location metadata */}
+                            <div
+                              className={`flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0 font-mono leading-tight truncate ${
+                                isLarge
+                                  ? 'text-xs font-bold'
+                                  : isMedium
+                                  ? 'text-[9px] font-semibold'
+                                  : effectiveLayout === 'grid-40'
+                                  ? 'text-[5.5px]'
+                                  : 'text-[6px]'
+                              }`}
+                            >
+                              {labelConfig.showDocNumber && docNumber && (
+                                <span className="font-semibold">
+                                  {labelCategory === 'OUT' ? 'SJ:' : 'REF:'}{docNumber}
+                                </span>
+                              )}
+                              {labelConfig.showLocation && (
+                                <span>• RAK:{it.location}</span>
+                              )}
+                              {labelConfig.showDate && docDate && (
+                                <span>• {docDate}</span>
+                              )}
+                              {labelCategory === 'GENERAL' && labelConfig.showPrice && it.unitPrice > 0 && (
+                                <span>• {formatRupiah(it.unitPrice)}</span>
+                              )}
                             </div>
-                          )
-                        )}
-                      </div>
-
-                      {/* Item Name */}
-                      {labelConfig.showTitle && (
-                        <span className="font-bold leading-tight truncate w-full text-black text-[8.5px]">
-                          {it.name}
-                        </span>
-                      )}
-
-                      {/* QR Code Renderer */}
-                      <div className="my-0.5 flex items-center justify-center shrink-0">
-                        <QRCodeRenderer
-                          value={it.encodedQr}
-                          size={getQRSizeForLayout()}
-                          includeMargin={false}
-                        />
-                      </div>
-
-                      {/* Footer Details */}
-                      <div className="w-full space-y-0.5 text-black">
-                        {labelConfig.showSku && (
-                          <span className="font-mono font-black tracking-wider block text-[8px] leading-tight truncate">
-                            {it.sku}
-                          </span>
-                        )}
-
-                        {/* Manual Quantity Content printed on label */}
-                        {labelConfig.showQuantity && (
-                          <div className="text-[6.5px] font-bold font-mono border border-black/80 py-0.2 px-1 rounded-xs bg-slate-50 my-0.2 leading-tight">
-                            <span>ISI: </span>
-                            <span className="font-black underline">{packInfo.text}</span>
                           </div>
-                        )}
-
-                        {/* Document and location metadata */}
-                        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0 text-[6px] font-mono leading-tight truncate">
-                          {labelConfig.showDocNumber && docNumber && (
-                            <span className="font-semibold">
-                              {labelCategory === 'OUT' ? 'SJ:' : 'REF:'}{docNumber}
-                            </span>
-                          )}
-                          {labelConfig.showLocation && (
-                            <span>• RAK:{it.location}</span>
-                          )}
-                          {labelConfig.showDate && docDate && (
-                            <span>• {docDate}</span>
-                          )}
-                          {labelCategory === 'GENERAL' && labelConfig.showPrice && it.unitPrice > 0 && (
-                            <span>• {formatRupiah(it.unitPrice)}</span>
-                          )}
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>,
+          document.body
+        )}
 
       {/* ========================================================= */}
-      {/* INTERACTIVE MODAL (HIDDEN IN PRINT) */}
+      {/* INTERACTIVE MODAL (COMPLETELY HIDDEN IN PRINT)            */}
       {/* ========================================================= */}
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden print:hidden animate-in fade-in zoom-in-95 duration-150 my-6">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto print:hidden">
+        <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-6">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80">
           <div className="flex items-center gap-3">
@@ -887,13 +1086,34 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                       <Boxes className="w-4 h-4 text-indigo-600" />
                       <span>Jumlah Label yang Ingin Dicetak:</span>
                     </label>
-                    <span className="text-[11px] font-bold text-indigo-700 font-mono bg-indigo-100/60 px-2 py-0.5 rounded-md">
-                      {copiesPerItem} Label ({getEstimatedSheets()} Lembar {sheetLayout === 'thermal' ? 'Roll' : 'A4'})
+                    <span className="text-[11px] font-bold text-indigo-700 font-mono bg-indigo-100/70 px-2.5 py-0.5 rounded-md">
+                      {copiesPerItem} Label ({getEstimatedSheets()} Lembar {effectiveLayout.startsWith('thermal') ? 'Roll' : 'A4'})
                     </span>
                   </div>
 
+                  {/* Auto-Fit size indicator */}
+                  <div className="mb-2.5 px-2.5 py-1.5 bg-white/90 rounded-xl border border-indigo-200/70 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-600 font-medium flex items-center gap-1">
+                      <span>Ukuran Cetak:</span>
+                      <strong className="text-slate-900">{getLayoutLabel(effectiveLayout)}</strong>
+                    </span>
+                    {sheetLayout === 'auto' ? (
+                      <span className="px-1.5 py-0.5 bg-indigo-600 text-white font-extrabold rounded-md text-[9px] uppercase tracking-wider">
+                        ⚡ Auto-Fit
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSheetLayout('auto')}
+                        className="text-indigo-600 hover:text-indigo-800 font-bold underline cursor-pointer text-[10px]"
+                      >
+                        Kembalikan Auto-Fit
+                      </button>
+                    )}
+                  </div>
+
                   {/* Primary Quick Options */}
-                  <div className="grid grid-cols-3 gap-1.5 mb-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-2.5">
                     <button
                       type="button"
                       onClick={() => setCopiesPerItem(1)}
@@ -907,14 +1127,25 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCopiesPerItem(itemsPerPage)}
+                      onClick={() => setCopiesPerItem(2)}
                       className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
-                        copiesPerItem === itemsPerPage
+                        copiesPerItem === 2
                           ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50'
                       }`}
                     >
-                      1 Lembar Pas ({itemsPerPage}x)
+                      2 Label (A4 Pas)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCopiesPerItem(4)}
+                      className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
+                        copiesPerItem === 4
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50'
+                      }`}
+                    >
+                      4 Label (Grid 2x2)
                     </button>
                     <button
                       type="button"
@@ -925,7 +1156,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                           : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50'
                       }`}
                     >
-                      Sesuai Stok ({singleItem?.quantity || 1}x)
+                      Stok ({singleItem?.quantity || 1}x)
                     </button>
                   </div>
 
@@ -962,7 +1193,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                   {/* Additional Preset Multiples */}
                   <div className="flex flex-wrap items-center gap-1 mt-2">
                     <span className="text-[10px] text-slate-400 font-medium mr-1">Kelipatan:</span>
-                    {[2, 5, 10, itemsPerPage * 2, itemsPerPage * 3, 100].map((qty) => (
+                    {[1, 2, 4, 6, 12, 24, 40, 100].map((qty) => (
                       <button
                         key={qty}
                         type="button"
@@ -1551,43 +1782,106 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                 <span>Pilih Format Layout Kertas / Printer:</span>
               </label>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  {
-                    id: 'grid-24',
-                    title: 'A4 Grid 24 Label',
-                    desc: '3 kolom x 8 baris (Standar Rak)',
-                  },
-                  {
-                    id: 'grid-12',
-                    title: 'A4 Grid 12 Label',
-                    desc: '2 kolom x 6 baris (Ukuran Besar)',
-                  },
-                  {
-                    id: 'grid-40',
-                    title: 'A4 Grid 40 Label',
-                    desc: '4 kolom x 10 baris (Ukuran Ringkas)',
-                  },
-                  {
-                    id: 'thermal',
-                    title: 'Thermal Roll 50x40',
-                    desc: 'Sticker printer barcode / roll',
-                  },
-                ].map((ly) => (
-                  <button
-                    key={ly.id}
-                    type="button"
-                    onClick={() => setSheetLayout(ly.id as SheetLayoutType)}
-                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      sheetLayout === ly.id
-                        ? 'border-indigo-600 bg-indigo-50/60 text-indigo-950 font-bold ring-1 ring-indigo-500 shadow-2xs'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <p className="text-xs font-bold leading-tight">{ly.title}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{ly.desc}</p>
-                  </button>
-                ))}
+              <div className="space-y-2">
+                {/* Auto-Fit Button */}
+                <button
+                  type="button"
+                  onClick={() => setSheetLayout('auto')}
+                  className={`w-full p-2.5 sm:p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                    sheetLayout === 'auto'
+                      ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-bold ring-2 ring-indigo-500 shadow-xs'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-700 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-slate-900">
+                          ⚡ Otomatis Sesuai Jumlah Label
+                        </span>
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-indigo-600 text-white">
+                          AUTO-FIT
+                        </span>
+                      </div>
+                      <p className="text-[10.5px] text-slate-500 mt-0.5">
+                        Menyesuaikan otomatis: <span className="font-bold text-indigo-700">{getLayoutLabel(effectiveLayout)}</span>
+                      </p>
+                    </div>
+                  </div>
+                  {sheetLayout === 'auto' && (
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-indigo-600 text-white shrink-0 ml-2">
+                      Aktif
+                    </span>
+                  )}
+                </button>
+
+                {/* Specific Layout Grids */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    {
+                      id: 'single-large',
+                      title: '1 Label Besar',
+                      desc: '~155×105mm (Box / Pallet)',
+                    },
+                    {
+                      id: 'grid-2',
+                      title: '2 Label Besar',
+                      desc: 'A4 ~165×115mm (Vertikal)',
+                    },
+                    {
+                      id: 'grid-4',
+                      title: '4 Label Sedang',
+                      desc: 'A4 ~90×115mm (2x2)',
+                    },
+                    {
+                      id: 'grid-6',
+                      title: '6 Label Sedang',
+                      desc: 'A4 ~90×76mm (2x3)',
+                    },
+                    {
+                      id: 'grid-12',
+                      title: '12 Label Standar',
+                      desc: 'A4 ~92×40mm (2x6)',
+                    },
+                    {
+                      id: 'grid-24',
+                      title: '24 Label Standar',
+                      desc: 'A4 ~63×31.5mm (3x8)',
+                    },
+                    {
+                      id: 'grid-40',
+                      title: '40 Label Ringkas',
+                      desc: 'A4 ~47×24mm (4x10)',
+                    },
+                    {
+                      id: 'thermal',
+                      title: 'Thermal 50×40',
+                      desc: 'Sticker barcode roll',
+                    },
+                    {
+                      id: 'thermal-80',
+                      title: 'Thermal 80×50',
+                      desc: 'Sticker roll lebar',
+                    },
+                  ].map((ly) => (
+                    <button
+                      key={ly.id}
+                      type="button"
+                      onClick={() => setSheetLayout(ly.id as SheetLayoutType)}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        sheetLayout === ly.id
+                          ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-bold ring-1 ring-indigo-500 shadow-2xs'
+                          : 'border-slate-200 hover:bg-slate-50 text-slate-700 bg-white'
+                      }`}
+                    >
+                      <p className="text-xs font-bold leading-tight">{ly.title}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{ly.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1682,7 +1976,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                 />
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
                       labelCategory === 'IN'
@@ -1697,6 +1991,9 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                       : labelCategory === 'OUT'
                       ? '▲ LABEL BARANG KELUAR'
                       : 'PRA LOGISTICS'}
+                  </span>
+                  <span className="text-[10px] bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-bold font-mono">
+                    Ukuran: {getLayoutLabel(effectiveLayout)}
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono">
                     QR: {qrValue}
@@ -1744,8 +2041,8 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
         <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-slate-50/80">
           <div className="text-xs text-slate-500 hidden sm:block">
             {mode === 'batch'
-              ? `${selectedBatchItemIds.length} item dipilih • Total ${printItemsList.length} salinan label siap dicetak`
-              : `${copiesPerItem} salinan label siap dicetak`}
+              ? `${selectedBatchItemIds.length} item dipilih • ${printItemsList.length} label (${getEstimatedSheets()} lembar) • Format: ${getLayoutLabel(effectiveLayout)}`
+              : `${copiesPerItem} label (${getEstimatedSheets()} lembar ${effectiveLayout.startsWith('thermal') ? 'roll' : 'A4'}) • Format: ${getLayoutLabel(effectiveLayout)}`}
           </div>
 
           <div className="flex items-center gap-2.5 ml-auto">
@@ -1768,11 +2065,14 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
               }`}
             >
               <Printer className="w-4 h-4" />
-              <span>Cetak {printItemsList.length} Label Sekarang</span>
+              <span>
+                Cetak {printItemsList.length} Label Sekarang ({getEstimatedSheets()} Lembar {effectiveLayout.startsWith('thermal') ? 'Roll' : 'A4'})
+              </span>
             </button>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 };
