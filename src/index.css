@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@media print {
+  @page {
+    size: auto;
+    margin: 8mm 6mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely suppress everything outside the printable label sheet */
+  header,
+  nav,
+  main,
+  footer,
+  aside,
+  #app-main-wrapper,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Avoid slicing labels across pages */
+  .break-inside-avoid,
+  .page-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Page breaking for multi-sheet batches */
+  .break-after-page,
+  .page-break-after-always {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .break-after-auto,
+  .page-break-after-avoid {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+}

@@ -306,7 +306,7 @@ export default function App() {
       />
 
       {/* Main Layout Area - Full Width Responsive */}
-      <div className="flex-1 flex w-full pb-20 md:pb-6">
+      <div id="app-main-wrapper" className="flex-1 flex w-full pb-20 md:pb-6 print:hidden">
         {/* Responsive Sidebar Navigation */}
         <Navigation
           activeTab={activeTab}
@@ -695,7 +695,7 @@ export default function App() {
 
       {/* Floating Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-3 fade-in duration-200">
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-3 fade-in duration-200 print:hidden">
           <div
             className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-xs font-medium ${
               toast.type === 'success'
@@ -726,7 +726,9 @@ export default function App() {
       />
 
       {/* Offline Status Badge */}
-      <OfflineIndicator />
+      <div className="print:hidden">
+        <OfflineIndicator />
+      </div>
     </div>
   );
 }

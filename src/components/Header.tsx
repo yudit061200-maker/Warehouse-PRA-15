@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-6 py-3 transition-all w-full">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-6 py-3 transition-all w-full print:hidden">
       <div className="flex items-center justify-between w-full">
         {/* Left: Mobile Menu Trigger & Breadcrumbs */}
         <div className="flex items-center gap-2 sm:gap-3">

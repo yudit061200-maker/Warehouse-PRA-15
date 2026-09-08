@@ -397,148 +397,190 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
     return total; // thermal roll labels
   };
 
+  // Items per page based on layout format
+  const itemsPerPage = useMemo(() => {
+    switch (sheetLayout) {
+      case 'grid-12':
+        return 12;
+      case 'grid-40':
+        return 40;
+      case 'thermal':
+        return 1;
+      case 'grid-24':
+      default:
+        return 24;
+    }
+  }, [sheetLayout]);
+
+  // Split into physical print pages to prevent spillover and duplicate copies
+  const pagedPrintItems = useMemo(() => {
+    const pages: Array<typeof printItemsList> = [];
+    for (let i = 0; i < printItemsList.length; i += itemsPerPage) {
+      pages.push(printItemsList.slice(i, i + itemsPerPage));
+    }
+    return pages.length > 0 ? pages : [[]];
+  }, [printItemsList, itemsPerPage]);
+
   // Grid classes based on sheet layout
   const getGridClasses = () => {
     switch (sheetLayout) {
       case 'grid-12':
-        return 'grid grid-cols-2 gap-3 text-xs';
+        return 'grid grid-cols-2 gap-2 text-xs';
       case 'grid-40':
-        return 'grid grid-cols-4 gap-2 text-[9px]';
+        return 'grid grid-cols-4 gap-1 text-[8.5px]';
       case 'thermal':
-        return 'flex flex-col gap-3 items-center';
+        return 'flex flex-col gap-0 items-center justify-center';
       case 'grid-24':
       default:
-        return 'grid grid-cols-3 gap-2 text-[10px]';
+        return 'grid grid-cols-3 gap-1.5 text-[9.5px]';
     }
   };
 
   const getQRSizeForLayout = () => {
     switch (sheetLayout) {
       case 'grid-12':
-        return 90;
+        return 85;
       case 'grid-40':
-        return 48;
+        return 45;
       case 'thermal':
-        return 75;
+        return 72;
       case 'grid-24':
       default:
-        return 62;
+        return 60;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto print:static print:inset-auto print:p-0 print:m-0 print:bg-white print:overflow-visible">
       {/* ========================================================= */}
       {/* PRINTABLE SHEET CONTAINER (VISIBLE ONLY IN PRINT DIALOG) */}
       {/* ========================================================= */}
-      <div className="hidden print:block fixed inset-0 bg-white text-black p-3 z-[99999]">
-        <div className={getGridClasses()}>
-          {printItemsList.map((it) => {
-            const packInfo = getLabelContentQty(it);
-            const partnerDisplay = partnerName || (it as any).supplier || '';
+      <div className="hidden print:block w-full bg-white text-black p-0 m-0 print:static">
+        {pagedPrintItems.map((pageItems, pageIdx) => {
+          const isLastPage = pageIdx === pagedPrintItems.length - 1;
+          return (
+            <div
+              key={`print-page-${pageIdx}`}
+              className={`w-full bg-white text-black box-border ${
+                !isLastPage
+                  ? 'break-after-page page-break-after-always'
+                  : 'break-after-auto page-break-after-avoid'
+              }`}
+            >
+              <div className={getGridClasses()}>
+                {pageItems.map((it) => {
+                  const packInfo = getLabelContentQty(it);
+                  const partnerDisplay = partnerName || (it as any).supplier || '';
 
-            return (
-              <div
-                key={it.uniqueKey}
-                className={`border border-black rounded-md p-2 flex flex-col items-center justify-between text-center bg-white page-break-inside-avoid relative ${
-                  sheetLayout === 'thermal'
-                    ? 'w-[55mm] h-[40mm] border-dashed mb-3'
-                    : 'min-h-[115px]'
-                }`}
-              >
-                {/* Distinct Label Header for Inbound / Outbound / General */}
-                <div className="w-full mb-1">
-                  {labelCategory === 'IN' ? (
-                    <div className="border-b-2 border-black pb-0.5 flex items-center justify-between px-1">
-                      <span className="text-[8px] font-black uppercase tracking-wider text-black flex items-center gap-1">
-                        <span>▼</span>
-                        <span>BARANG MASUK</span>
-                      </span>
-                      <span className="text-[7px] font-bold uppercase tracking-tight text-black border border-black px-1 rounded-xs">
-                        PENERIMAAN
-                      </span>
-                    </div>
-                  ) : labelCategory === 'OUT' ? (
-                    <div className="border-b-2 border-black pb-0.5 flex items-center justify-between px-1">
-                      <span className="text-[8px] font-black uppercase tracking-wider text-black flex items-center gap-1">
-                        <span>▲</span>
-                        <span>BARANG KELUAR</span>
-                      </span>
-                      <span className="text-[7px] font-bold uppercase tracking-tight text-black border border-black px-1 rounded-xs">
-                        PENGELUARAN / SJ
-                      </span>
-                    </div>
-                  ) : (
-                    labelConfig.showBrand && (
-                      <div className="border-b border-black pb-0.5 flex items-center justify-between px-1">
-                        <span className="text-[7px] font-extrabold uppercase tracking-widest text-black">
-                          GUDANGPRO LOGISTICS
-                        </span>
-                        <span className="text-[7px] font-bold text-black font-mono">RAK STOK</span>
+                  return (
+                    <div
+                      key={it.uniqueKey}
+                      className={`border border-black rounded-md p-1.5 flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${
+                        sheetLayout === 'thermal'
+                          ? 'w-[50mm] h-[38mm] mx-auto mb-0'
+                          : sheetLayout === 'grid-12'
+                          ? 'h-[43mm] max-h-[44mm]'
+                          : sheetLayout === 'grid-40'
+                          ? 'h-[25mm] max-h-[26mm]'
+                          : 'h-[32.5mm] max-h-[33mm]'
+                      }`}
+                    >
+                      {/* Distinct Label Header for Inbound / Outbound / General */}
+                      <div className="w-full mb-0.5">
+                        {labelCategory === 'IN' ? (
+                          <div className="border-b-2 border-black pb-0.5 flex items-center justify-between px-1">
+                            <span className="text-[8px] font-black uppercase tracking-wider text-black flex items-center gap-1">
+                              <span>▼</span>
+                              <span>BARANG MASUK</span>
+                            </span>
+                            <span className="text-[7px] font-bold uppercase tracking-tight text-black border border-black px-1 rounded-xs">
+                              PENERIMAAN
+                            </span>
+                          </div>
+                        ) : labelCategory === 'OUT' ? (
+                          <div className="border-b-2 border-black pb-0.5 flex items-center justify-between px-1">
+                            <span className="text-[8px] font-black uppercase tracking-wider text-black flex items-center gap-1">
+                              <span>▲</span>
+                              <span>BARANG KELUAR</span>
+                            </span>
+                            <span className="text-[7px] font-bold uppercase tracking-tight text-black border border-black px-1 rounded-xs">
+                              PENGELUARAN / SJ
+                            </span>
+                          </div>
+                        ) : (
+                          labelConfig.showBrand && (
+                            <div className="border-b border-black pb-0.5 flex items-center justify-between px-1">
+                              <span className="text-[7px] font-extrabold uppercase tracking-widest text-black">
+                                PRA LOGISTICS
+                              </span>
+                              <span className="text-[7px] font-bold text-black font-mono">RAK STOK</span>
+                            </div>
+                          )
+                        )}
                       </div>
-                    )
-                  )}
-                </div>
 
-                {/* Item Name */}
-                {labelConfig.showTitle && (
-                  <span className="font-bold leading-tight line-clamp-1 w-full text-black text-[10px]">
-                    {it.name}
-                  </span>
-                )}
+                      {/* Item Name */}
+                      {labelConfig.showTitle && (
+                        <span className="font-bold leading-tight line-clamp-1 w-full text-black text-[9.5px]">
+                          {it.name}
+                        </span>
+                      )}
 
-                {/* QR Code Renderer */}
-                <div className="my-1 flex items-center justify-center">
-                  <QRCodeRenderer
-                    value={it.encodedQr}
-                    size={getQRSizeForLayout()}
-                    includeMargin={false}
-                  />
-                </div>
+                      {/* QR Code Renderer */}
+                      <div className="my-0.5 flex items-center justify-center">
+                        <QRCodeRenderer
+                          value={it.encodedQr}
+                          size={getQRSizeForLayout()}
+                          includeMargin={false}
+                        />
+                      </div>
 
-                {/* Footer Details */}
-                <div className="w-full space-y-0.5 text-black">
-                  {labelConfig.showSku && (
-                    <span className="font-mono font-black tracking-wider block text-[10px]">
-                      {it.sku}
-                    </span>
-                  )}
+                      {/* Footer Details */}
+                      <div className="w-full space-y-0.5 text-black">
+                        {labelConfig.showSku && (
+                          <span className="font-mono font-black tracking-wider block text-[9.5px] leading-tight">
+                            {it.sku}
+                          </span>
+                        )}
 
-                  {/* Manual Quantity Content printed on label */}
-                  {labelConfig.showQuantity && (
-                    <div className="text-[8px] font-bold font-mono border border-black/80 py-0.5 px-1 rounded-xs bg-slate-50 my-0.5">
-                      <span>JUMLAH / ISI: </span>
-                      <span className="font-black underline">{packInfo.text}</span>
+                        {/* Manual Quantity Content printed on label */}
+                        {labelConfig.showQuantity && (
+                          <div className="text-[7.5px] font-bold font-mono border border-black/80 py-0.5 px-1 rounded-xs bg-slate-50 my-0.5">
+                            <span>JUMLAH / ISI: </span>
+                            <span className="font-black underline">{packInfo.text}</span>
+                          </div>
+                        )}
+
+                        {/* Document and location metadata */}
+                        <div className="flex flex-wrap items-center justify-center gap-1 text-[7px] font-mono leading-tight">
+                          {labelConfig.showDocNumber && docNumber && (
+                            <span className="font-semibold">
+                              {labelCategory === 'OUT' ? 'SJ:' : 'REF:'} {docNumber}
+                            </span>
+                          )}
+                          {labelConfig.showDate && docDate && (
+                            <span>• TGL: {docDate}</span>
+                          )}
+                          {labelConfig.showLocation && (
+                            <span>• RAK: {it.location}</span>
+                          )}
+                          {labelConfig.showPartner && partnerDisplay && (
+                            <span className="line-clamp-1">
+                              • {labelCategory === 'OUT' ? 'TJN:' : 'SUP:'} {partnerDisplay}
+                            </span>
+                          )}
+                          {labelCategory === 'GENERAL' && labelConfig.showPrice && it.unitPrice > 0 && (
+                            <span>• {formatRupiah(it.unitPrice)}</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Document and location metadata */}
-                  <div className="flex flex-wrap items-center justify-center gap-1 text-[7px] font-mono leading-tight">
-                    {labelConfig.showDocNumber && docNumber && (
-                      <span className="font-semibold">
-                        {labelCategory === 'OUT' ? 'SJ:' : 'REF:'} {docNumber}
-                      </span>
-                    )}
-                    {labelConfig.showDate && docDate && (
-                      <span>• TGL: {docDate}</span>
-                    )}
-                    {labelConfig.showLocation && (
-                      <span>• RAK: {it.location}</span>
-                    )}
-                    {labelConfig.showPartner && partnerDisplay && (
-                      <span className="line-clamp-1">
-                        • {labelCategory === 'OUT' ? 'TJN:' : 'SUP:'} {partnerDisplay}
-                      </span>
-                    )}
-                    {labelCategory === 'GENERAL' && labelConfig.showPrice && it.unitPrice > 0 && (
-                      <span>• {formatRupiah(it.unitPrice)}</span>
-                    )}
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ========================================================= */}
@@ -1603,7 +1645,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                       ? '▼ LABEL BARANG MASUK'
                       : labelCategory === 'OUT'
                       ? '▲ LABEL BARANG KELUAR'
-                      : 'GUDANGPRO LOGISTICS'}
+                      : 'PRA LOGISTICS'}
                   </span>
                   <span className="text-[10px] text-slate-400 font-mono">
                     QR: {qrValue}
