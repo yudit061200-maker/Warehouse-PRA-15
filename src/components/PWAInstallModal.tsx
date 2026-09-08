@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react';
+import { PRALogo } from './PRALogo';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -38,42 +39,38 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header with App Branding */}
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white p-6 relative">
+        <div className="bg-gradient-to-r from-red-950 via-slate-900 to-black text-white p-6 relative border-b border-red-900/30">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-indigo-200 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+            className="absolute top-4 right-4 p-2 text-slate-300 hover:text-white rounded-full hover:bg-white/10 transition-colors cursor-pointer"
             aria-label="Tutup"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 p-1 shadow-inner flex items-center justify-center shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-lg text-white">
-                G
-              </div>
-            </div>
+            <PRALogo size="lg" />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white leading-tight">Install GudangPro</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+                <h3 className="text-lg font-bold text-white leading-tight">Install PRA Inventory</h3>
+                <span className="px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 text-[10px] font-bold">
                   PWA Ready
                 </span>
               </div>
-              <p className="text-xs text-indigo-200 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Aplikasi Gudang & Pemindai QR di Layar Utama HP
               </p>
             </div>
           </div>
 
           {/* Quick value badges */}
-          <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-[11px] text-indigo-100">
+          <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-200">
             <div className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <Zap className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
               <span>Buka Instan</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Smartphone className="w-3.5 h-3.5 text-indigo-300 shrink-0" />
+              <Smartphone className="w-3.5 h-3.5 text-red-400 shrink-0" />
               <span>Layar Penuh</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -89,7 +86,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-900">
               <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
               <div>
-                <h4 className="font-bold text-sm">GudangPro Sudah Terinstall!</h4>
+                <h4 className="font-bold text-sm">PRA Inventory Sudah Terinstall!</h4>
                 <p className="text-xs text-emerald-700 mt-0.5">
                   Aplikasi ini sudah terpasang di perangkat Anda dan dapat diakses langsung dari layar utama.
                 </p>
@@ -99,20 +96,20 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
             <>
               {/* If browser supports native install prompt */}
               {isInstallable && (
-                <div className="p-4 bg-indigo-50/80 border border-indigo-200 rounded-2xl space-y-3">
+                <div className="p-4 bg-red-50/70 border border-red-200 rounded-2xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-red-950 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-red-600" />
                       Instalasi Otomatis Tersedia
                     </span>
-                    <span className="text-[11px] text-indigo-600 font-medium">1-Klik</span>
+                    <span className="text-[11px] text-red-600 font-bold bg-red-100 px-2 py-0.5 rounded-full">1-Klik</span>
                   </div>
                   <button
                     onClick={handleInstallClick}
                     disabled={isInstalling}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 bg-red-600 hover:bg-red-700 active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4 text-yellow-300" />
                     {isInstalling ? 'Memproses Instalasi...' : 'Pasang Aplikasi Sekarang di Smartphone'}
                   </button>
                 </div>
@@ -126,7 +123,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                     onClick={() => setActiveTab('android')}
                     className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'android'
-                        ? 'bg-white text-indigo-950 shadow-xs'
+                        ? 'bg-white text-slate-900 shadow-xs border-b-2 border-red-600'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -137,7 +134,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                     onClick={() => setActiveTab('ios')}
                     className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'ios'
-                        ? 'bg-white text-indigo-950 shadow-xs'
+                        ? 'bg-white text-slate-900 shadow-xs border-b-2 border-red-600'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -149,7 +146,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                 {activeTab === 'android' && (
                   <div className="space-y-3 pt-1">
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         1
                       </div>
                       <div className="text-xs text-slate-700">
@@ -161,7 +158,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                     </div>
 
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         2
                       </div>
                       <div className="text-xs text-slate-700">
@@ -173,14 +170,14 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                     </div>
 
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         3
                       </div>
                       <div className="text-xs text-slate-700">
                         <strong className="text-slate-900 block font-semibold mb-0.5">
                           Pilih "Install Aplikasi" atau "Tambahkan ke Layar Utama"
                         </strong>
-                        Ikon GudangPro akan otomatis muncul di menu aplikasi/layar utama HP Anda seperti aplikasi Play Store.
+                        Ikon PRA akan otomatis muncul di menu aplikasi/layar utama HP Anda seperti aplikasi Play Store.
                       </div>
                     </div>
                   </div>
@@ -190,7 +187,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                 {activeTab === 'ios' && (
                   <div className="space-y-3 pt-1">
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         1
                       </div>
                       <div className="text-xs text-slate-700">
@@ -202,26 +199,26 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
                     </div>
 
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         2
                       </div>
                       <div className="text-xs text-slate-700 flex-1">
                         <strong className="text-slate-900 block font-semibold mb-0.5 flex items-center gap-1.5">
-                          Ketuk Tombol Share <Share className="w-3.5 h-3.5 text-indigo-600 inline" /> di Toolbar Bawah
+                          Ketuk Tombol Share <Share className="w-3.5 h-3.5 text-red-600 inline" /> di Toolbar Bawah
                         </strong>
                         Tombol kotak dengan tanda panah ke atas di bagian tengah bawah layar Safari.
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                      <div className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                         3
                       </div>
                       <div className="text-xs text-slate-700 flex-1">
                         <strong className="text-slate-900 block font-semibold mb-0.5 flex items-center gap-1.5">
-                          Pilih "Add to Home Screen" <PlusSquare className="w-3.5 h-3.5 text-indigo-600 inline" /> lalu ketuk "Add"
+                          Pilih "Add to Home Screen" <PlusSquare className="w-3.5 h-3.5 text-red-600 inline" /> lalu ketuk "Add"
                         </strong>
-                        Gulir menu ke bawah dan pilih Tambah ke Layar Utama. Ikon GudangPro akan siap digunakan di Home Screen!
+                        Gulir menu ke bawah dan pilih Tambah ke Layar Utama. Ikon PRA akan siap digunakan di Home Screen!
                       </div>
                     </div>
                   </div>

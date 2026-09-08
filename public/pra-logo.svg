@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 230" fill="none">
+  <!-- Outer Red Pill Container -->
+  <rect x="12" y="12" width="476" height="206" rx="103" fill="#242528" stroke="#E52329" stroke-width="24"/>
+  <!-- Yellow PRA Text -->
+  <text x="250" y="128" dominant-baseline="central" text-anchor="middle" fill="#FFE600" font-size="144" font-weight="900" font-family="'Arial Black', Impact, 'Segoe UI Black', system-ui, sans-serif" letter-spacing="-2">PRA</text>
+</svg>

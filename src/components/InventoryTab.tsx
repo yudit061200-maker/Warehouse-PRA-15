@@ -22,12 +22,19 @@ import {
   ArrowUpDown,
   ArrowDown,
   ArrowUp,
+  Tag,
+  Filter,
+  RotateCcw,
 } from 'lucide-react';
 import { exportInventoryToExcel, exportInventoryToPDF } from '../utils/exporter';
 
 export type InventorySortKey =
   | 'name_asc'
   | 'name_desc'
+  | 'category_asc'
+  | 'category_desc'
+  | 'location_asc'
+  | 'location_desc'
   | 'stock_desc'
   | 'stock_asc'
   | 'deficit_desc'
@@ -35,8 +42,7 @@ export type InventorySortKey =
   | 'value_desc'
   | 'value_asc'
   | 'price_desc'
-  | 'price_asc'
-  | 'location_asc';
+  | 'price_asc';
 
 interface InventoryTabProps {
   items: InventoryItem[];
@@ -61,6 +67,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedLocation, setSelectedLocation] = useState('ALL');
   const [stockStatusFilter, setStockStatusFilter] = useState<
     'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'
   >('ALL');
@@ -70,8 +77,17 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
   const categories = useMemo(() => {
-    const set = new Set(items.map((i) => i.category).filter(Boolean));
-    return ['ALL', ...Array.from(set)];
+    const set = new Set<string>(
+      items.map((i) => (i.category || '').trim()).filter(Boolean)
+    );
+    return ['ALL', ...Array.from(set).sort((a, b) => a.localeCompare(b, 'id'))];
+  }, [items]);
+
+  const locations = useMemo(() => {
+    const set = new Set<string>(
+      items.map((i) => (i.location || '').trim()).filter(Boolean)
+    );
+    return ['ALL', ...Array.from(set).sort((a, b) => a.localeCompare(b, 'id'))];
   }, [items]);
 
   const filteredItems = useMemo(() => {
@@ -84,11 +100,16 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
         item.sku.toLowerCase().includes(q) ||
         (item.barcode && item.barcode.toLowerCase().includes(q)) ||
         item.location.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q) ||
         (item.supplier && item.supplier.toLowerCase().includes(q));
 
-      // Category
+      // Separate Category Filter
       const matchesCategory =
         selectedCategory === 'ALL' || item.category === selectedCategory;
+
+      // Separate Location Filter
+      const matchesLocation =
+        selectedLocation === 'ALL' || item.location === selectedLocation;
 
       // Status
       let matchesStatus = true;
@@ -100,9 +121,9 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
         matchesStatus = item.quantity > item.minStock;
       }
 
-      return matchesQuery && matchesCategory && matchesStatus;
+      return matchesQuery && matchesCategory && matchesLocation && matchesStatus;
     });
-  }, [items, searchQuery, selectedCategory, stockStatusFilter]);
+  }, [items, searchQuery, selectedCategory, selectedLocation, stockStatusFilter]);
 
   // Sort filtered items according to selected sortBy option
   const sortedItems = useMemo(() => {
@@ -113,6 +134,14 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
           return (a.name || '').localeCompare(b.name || '', 'id');
         case 'name_desc':
           return (b.name || '').localeCompare(a.name || '', 'id');
+        case 'category_asc':
+          return (a.category || '').localeCompare(b.category || '', 'id');
+        case 'category_desc':
+          return (b.category || '').localeCompare(a.category || '', 'id');
+        case 'location_asc':
+          return (a.location || '').localeCompare(b.location || '', 'id');
+        case 'location_desc':
+          return (b.location || '').localeCompare(a.location || '', 'id');
         case 'stock_desc':
           return b.quantity - a.quantity;
         case 'stock_asc':
@@ -132,8 +161,6 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
           return (b.unitPrice || 0) - (a.unitPrice || 0);
         case 'price_asc':
           return (a.unitPrice || 0) - (b.unitPrice || 0);
-        case 'location_asc':
-          return (a.location || '').localeCompare(b.location || '');
         default:
           return 0;
       }
@@ -302,13 +329,13 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {/* Search Box */}
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari SKU, QR, Nama, Rak..."
-              className="w-full pl-9 pr-8 py-2 text-xs md:text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-slate-50 text-slate-900"
+              placeholder="Cari SKU, Barcode, Nama..."
+              className="w-full pl-9 pr-8 py-2 text-xs md:text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-red-500 bg-slate-50 text-slate-900"
             />
             {searchQuery && (
               <button
@@ -321,11 +348,13 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
           </div>
 
           {/* Category Filter */}
-          <div>
+          <div className="relative">
+            <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 text-xs md:text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              className="w-full pl-9 pr-3 py-2 text-xs md:text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-red-500 cursor-pointer"
+              title="Filter Kategori"
             >
               <option value="ALL">Semua Kategori ({categories.length - 1})</option>
               {categories
@@ -338,32 +367,55 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
             </select>
           </div>
 
-          {/* Sort By Dropdown */}
-          <div>
-            <div className="relative flex items-center">
-              <ArrowUpDown className="w-3.5 h-3.5 text-indigo-600 absolute left-3 pointer-events-none" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as InventorySortKey)}
-                className="w-full pl-8 pr-3 py-2 text-xs md:text-sm font-medium border border-indigo-200 bg-indigo-50/40 text-slate-900 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-                title="Urutkan Master Barang"
-              >
-                <option value="name_asc">Urutkan: Nama (A → Z)</option>
-                <option value="name_desc">Urutkan: Nama (Z → A)</option>
-                <option value="stock_desc">Urutkan: Stok Terbanyak</option>
-                <option value="stock_asc">Urutkan: Stok Tersedikit</option>
-                <option value="deficit_desc">Urutkan: Stok Kritis / Menipis</option>
-                <option value="sku_asc">Urutkan: Kode SKU (A → Z)</option>
-                <option value="value_desc">Urutkan: Total Nilai Tertinggi</option>
-                <option value="value_asc">Urutkan: Total Nilai Terendah</option>
-                <option value="price_desc">Urutkan: Harga Tertinggi</option>
-                <option value="price_asc">Urutkan: Harga Terendah</option>
-                <option value="location_asc">Urutkan: Lokasi Rak (A → Z)</option>
-              </select>
-            </div>
+          {/* Location Filter */}
+          <div className="relative">
+            <MapPin className="w-3.5 h-3.5 text-red-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs md:text-sm border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-red-500 cursor-pointer"
+              title="Filter Lokasi Rak"
+            >
+              <option value="ALL">Semua Lokasi / Rak ({locations.length - 1})</option>
+              {locations
+                .filter((l) => l !== 'ALL')
+                .map((l) => (
+                  <option key={l} value={l}>
+                    Rak: {l}
+                  </option>
+                ))}
+            </select>
           </div>
 
-          {/* Status Filter Chips */}
+          {/* Sort By Dropdown */}
+          <div className="relative flex items-center">
+            <ArrowUpDown className="w-3.5 h-3.5 text-red-600 absolute left-3 pointer-events-none" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as InventorySortKey)}
+              className="w-full pl-8 pr-3 py-2 text-xs md:text-sm font-medium border border-slate-200 bg-slate-50 text-slate-900 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-red-500 cursor-pointer"
+              title="Urutkan Master Barang"
+            >
+              <option value="name_asc">Nama (A → Z)</option>
+              <option value="name_desc">Nama (Z → A)</option>
+              <option value="category_asc">Kategori (A → Z)</option>
+              <option value="category_desc">Kategori (Z → A)</option>
+              <option value="location_asc">Lokasi Rak (A → Z)</option>
+              <option value="location_desc">Lokasi Rak (Z → A)</option>
+              <option value="stock_desc">Stok Terbanyak</option>
+              <option value="stock_asc">Stok Tersedikit</option>
+              <option value="deficit_desc">Stok Kritis / Menipis</option>
+              <option value="sku_asc">Kode SKU (A → Z)</option>
+              <option value="value_desc">Total Nilai Tertinggi</option>
+              <option value="value_asc">Total Nilai Terendah</option>
+              <option value="price_desc">Harga Tertinggi</option>
+              <option value="price_asc">Harga Terendah</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Status Filter Chips & Active Filter Indicator */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
             <button
               onClick={() => setStockStatusFilter('ALL')}
@@ -379,8 +431,8 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
               onClick={() => setStockStatusFilter('LOW_STOCK')}
               className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1 cursor-pointer min-h-[34px] ${
                 stockStatusFilter === 'LOW_STOCK'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                  ? 'bg-red-600 text-white shadow-xs'
+                  : 'bg-red-50 text-red-700 hover:bg-red-100'
               }`}
             >
               <AlertTriangle className="w-3 h-3" />
@@ -397,6 +449,27 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
               Habis ({items.filter((i) => i.quantity === 0).length})
             </button>
           </div>
+
+          {(selectedCategory !== 'ALL' || selectedLocation !== 'ALL' || searchQuery || stockStatusFilter !== 'ALL') && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">
+                Ditemukan: <strong>{filteredItems.length}</strong> barang
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('ALL');
+                  setSelectedLocation('ALL');
+                  setSearchQuery('');
+                  setStockStatusFilter('ALL');
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset Filter
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -441,12 +514,12 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                       <button
                         type="button"
                         onClick={() => setSortBy(sortBy === 'name_asc' ? 'name_desc' : 'name_asc')}
-                        className="flex items-center gap-1 hover:text-indigo-600 transition-colors cursor-pointer group"
+                        className="flex items-center gap-1 hover:text-red-600 transition-colors cursor-pointer group"
                         title="Urutkan berdasarkan Nama Barang"
                       >
                         <span>Barang & SKU</span>
-                        {sortBy === 'name_asc' && <ArrowUp className="w-3 h-3 text-indigo-600" />}
-                        {sortBy === 'name_desc' && <ArrowDown className="w-3 h-3 text-indigo-600" />}
+                        {sortBy === 'name_asc' && <ArrowUp className="w-3 h-3 text-red-600" />}
+                        {sortBy === 'name_desc' && <ArrowDown className="w-3 h-3 text-red-600" />}
                         {sortBy !== 'name_asc' && sortBy !== 'name_desc' && (
                           <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
                         )}
@@ -456,14 +529,29 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                     <th className="py-3.5 px-4">
                       <button
                         type="button"
-                        onClick={() => setSortBy(sortBy === 'location_asc' ? 'name_asc' : 'location_asc')}
-                        className="flex items-center gap-1 hover:text-indigo-600 transition-colors cursor-pointer group"
+                        onClick={() => setSortBy(sortBy === 'category_asc' ? 'category_desc' : 'category_asc')}
+                        className="flex items-center gap-1 hover:text-red-600 transition-colors cursor-pointer group"
+                        title="Urutkan berdasarkan Kategori"
+                      >
+                        <span>Kategori</span>
+                        {sortBy === 'category_asc' && <ArrowUp className="w-3 h-3 text-red-600" />}
+                        {sortBy === 'category_desc' && <ArrowDown className="w-3 h-3 text-red-600" />}
+                        {sortBy !== 'category_asc' && sortBy !== 'category_desc' && (
+                          <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="py-3.5 px-4">
+                      <button
+                        type="button"
+                        onClick={() => setSortBy(sortBy === 'location_asc' ? 'location_desc' : 'location_asc')}
+                        className="flex items-center gap-1 hover:text-red-600 transition-colors cursor-pointer group"
                         title="Urutkan berdasarkan Lokasi Rak"
                       >
-                        <span>Kategori & Lokasi</span>
-                        {sortBy === 'location_asc' ? (
-                          <ArrowUp className="w-3 h-3 text-indigo-600" />
-                        ) : (
+                        <span>Lokasi Rak</span>
+                        {sortBy === 'location_asc' && <ArrowUp className="w-3 h-3 text-red-600" />}
+                        {sortBy === 'location_desc' && <ArrowDown className="w-3 h-3 text-red-600" />}
+                        {sortBy !== 'location_asc' && sortBy !== 'location_desc' && (
                           <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
                         )}
                       </button>
@@ -472,12 +560,12 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                       <button
                         type="button"
                         onClick={() => setSortBy(sortBy === 'stock_desc' ? 'stock_asc' : 'stock_desc')}
-                        className="inline-flex items-center justify-center gap-1 hover:text-indigo-600 transition-colors cursor-pointer group w-full"
+                        className="inline-flex items-center justify-center gap-1 hover:text-red-600 transition-colors cursor-pointer group w-full"
                         title="Urutkan berdasarkan Kuantitas Stok"
                       >
                         <span>Stok / Min</span>
-                        {sortBy === 'stock_desc' && <ArrowDown className="w-3 h-3 text-indigo-600" />}
-                        {sortBy === 'stock_asc' && <ArrowUp className="w-3 h-3 text-indigo-600" />}
+                        {sortBy === 'stock_desc' && <ArrowDown className="w-3 h-3 text-red-600" />}
+                        {sortBy === 'stock_asc' && <ArrowUp className="w-3 h-3 text-red-600" />}
                         {sortBy !== 'stock_desc' && sortBy !== 'stock_asc' && (
                           <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
                         )}
@@ -487,12 +575,12 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                       <button
                         type="button"
                         onClick={() => setSortBy(sortBy === 'price_desc' ? 'price_asc' : 'price_desc')}
-                        className="inline-flex items-center justify-end gap-1 hover:text-indigo-600 transition-colors cursor-pointer group w-full"
+                        className="inline-flex items-center justify-end gap-1 hover:text-red-600 transition-colors cursor-pointer group w-full"
                         title="Urutkan berdasarkan Harga Satuan"
                       >
                         <span>Harga Satuan</span>
-                        {sortBy === 'price_desc' && <ArrowDown className="w-3 h-3 text-indigo-600" />}
-                        {sortBy === 'price_asc' && <ArrowUp className="w-3 h-3 text-indigo-600" />}
+                        {sortBy === 'price_desc' && <ArrowDown className="w-3 h-3 text-red-600" />}
+                        {sortBy === 'price_asc' && <ArrowUp className="w-3 h-3 text-red-600" />}
                         {sortBy !== 'price_desc' && sortBy !== 'price_asc' && (
                           <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
                         )}
@@ -513,7 +601,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                       <tr
                         key={item.id}
                         className={`transition-colors ${
-                          isSelected ? 'bg-indigo-50/70' : 'hover:bg-slate-50/70'
+                          isSelected ? 'bg-red-50/50' : 'hover:bg-slate-50/70'
                         }`}
                       >
                         {/* Checkbox */}
@@ -527,7 +615,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                             className="p-1 rounded hover:bg-slate-200/60 cursor-pointer text-slate-400 hover:text-slate-700 transition-colors"
                           >
                             {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-indigo-600" />
+                              <CheckSquare className="w-4 h-4 text-red-600" />
                             ) : (
                               <Square className="w-4 h-4 text-slate-300" />
                             )}
@@ -539,7 +627,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                           <span className="font-semibold text-slate-900 text-xs block line-clamp-1">
                             {item.name}
                           </span>
-                          <span className="font-mono text-[11px] text-indigo-700 font-bold">
+                          <span className="font-mono text-[11px] text-red-700 font-bold">
                             {item.sku}
                           </span>
                           {item.supplier && (
@@ -557,22 +645,29 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                             </span>
                             <button
                               onClick={() => onPrintBarcode(item)}
-                              className="text-[10px] text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold cursor-pointer bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded"
+                              className="text-[10px] text-red-700 hover:text-red-900 flex items-center gap-1 font-semibold cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded"
                             >
                               <QrCode className="w-3 h-3" /> Cetak Sheet QR
                             </button>
                           </div>
                         </td>
 
-                        {/* Category & Location */}
+                        {/* Dedicated Category Column */}
                         <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium inline-block mb-1">
-                            {item.category}
+                          <span
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/70 text-slate-800 text-[11px] font-medium max-w-[130px] truncate"
+                            title={item.category}
+                          >
+                            {item.category || 'Umum'}
                           </span>
-                          <span className="flex items-center gap-1 text-[11px] text-slate-500">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            {item.location}
-                          </span>
+                        </td>
+
+                        {/* Dedicated Location Column */}
+                        <td className="py-3 px-4">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50/70 border border-red-100 text-slate-800 text-[11px] font-mono font-medium whitespace-nowrap">
+                            <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                            <span>{item.location || '-'}</span>
+                          </div>
                         </td>
 
                         {/* Stock & Min */}
@@ -667,7 +762,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                   <div
                     key={item.id}
                     className={`p-4 space-y-3 transition-colors ${
-                      isSelected ? 'bg-indigo-50/70' : ''
+                      isSelected ? 'bg-red-50/50' : ''
                     }`}
                   >
                     {/* Top Row: Checkbox, Name, SKU, Status */}
@@ -679,7 +774,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                           className="mt-0.5 p-1 rounded hover:bg-slate-200/60 cursor-pointer text-slate-400"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-indigo-600" />
+                            <CheckSquare className="w-4 h-4 text-red-600" />
                           ) : (
                             <Square className="w-4 h-4 text-slate-300" />
                           )}
@@ -688,11 +783,17 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                           <h4 className="text-xs font-bold text-slate-900 leading-snug break-words">
                             {item.name}
                           </h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[11px] text-indigo-700 font-mono font-bold">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span className="text-[11px] text-red-700 font-mono font-bold">
                               {item.sku}
                             </span>
-                            <span className="text-[10px] text-slate-400">• {item.location}</span>
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200/60">
+                              {item.category}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] text-slate-800 bg-red-50 border border-red-100 px-2 py-0.5 rounded-md font-mono font-medium">
+                              <MapPin className="w-2.5 h-2.5 text-red-600" />
+                              {item.location}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -732,7 +833,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
                       <button
                         onClick={() => onPrintBarcode(item)}
-                        className="text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
+                        className="text-xs text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold"
                       >
                         <QrCode className="w-3.5 h-3.5" /> Cetak QR
                       </button>

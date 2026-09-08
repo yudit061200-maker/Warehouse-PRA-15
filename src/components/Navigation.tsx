@@ -11,6 +11,7 @@ import {
   Sparkles,
   Smartphone,
 } from 'lucide-react';
+import { PRALogo } from './PRALogo';
 
 interface NavigationProps {
   activeTab: ActiveTab;
@@ -59,16 +60,8 @@ export const Navigation: React.FC<NavigationProps> = ({
       {/* Desktop / Tablet Sidebar */}
       <aside className="hidden md:flex flex-col w-56 lg:w-64 shrink-0 bg-slate-950 text-slate-200 border-r border-slate-800/80 p-3.5 lg:p-4 space-y-5 lg:space-y-6 min-h-[calc(100vh-57px)]">
         {/* Brand Header */}
-        <div className="px-2 py-2 border-b border-slate-800/80 flex items-center gap-2.5 lg:gap-3">
-          <div className="w-7 h-7 lg:w-8 lg:h-8 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-xs shrink-0 text-xs lg:text-sm">
-            G
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xs lg:text-sm font-bold tracking-tight text-white leading-tight truncate">
-              GudangPro
-            </h1>
-            <p className="text-[9px] lg:text-[10px] text-slate-400 font-medium truncate">Inventory & QR System</p>
-          </div>
+        <div className="px-1 py-1.5 border-b border-slate-800/80 flex items-center justify-start">
+          <PRALogo size="lg" showSubtitle />
         </div>
 
         {/* Navigation list */}
@@ -89,17 +82,17 @@ export const Navigation: React.FC<NavigationProps> = ({
                   onClick={() => handleItemClick(item.id as ActiveTab)}
                   className={`w-full flex items-center justify-between px-2.5 lg:px-3 py-2 lg:py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-slate-800 text-white shadow-xs font-semibold'
-                      : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                      ? 'bg-slate-900 text-white shadow-xs font-semibold border-l-2 border-red-500'
+                      : 'text-slate-400 hover:bg-slate-900/60 hover:text-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-2 lg:gap-2.5 truncate">
                     <Icon
                       className={`w-4 h-4 shrink-0 ${
                         isActive
-                          ? 'text-indigo-400'
+                          ? 'text-yellow-400'
                           : item.isHighlight
-                          ? 'text-indigo-400/80'
+                          ? 'text-yellow-400/80'
                           : 'text-slate-400'
                       }`}
                     />
@@ -111,7 +104,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                     </span>
                   )}
                   {item.isHighlight && !item.badge && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 ml-1" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0 ml-1" />
                   )}
                 </button>
               );
@@ -124,13 +117,13 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             type="button"
             onClick={onOpenInstall}
-            className="w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-950/90 to-slate-900 border border-indigo-500/40 hover:border-indigo-400 text-indigo-200 hover:text-white flex items-center justify-between transition-all cursor-pointer group shadow-xs"
+            className="w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-red-950/80 to-slate-900 border border-red-600/40 hover:border-red-500 text-red-200 hover:text-white flex items-center justify-between transition-all cursor-pointer group shadow-xs"
           >
             <div className="flex items-center gap-2 text-xs font-semibold">
-              <Smartphone className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+              <Smartphone className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition-transform" />
               <span>Install di Smartphone</span>
             </div>
-            <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono font-bold">
+            <span className="text-[10px] bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 px-1.5 py-0.5 rounded font-mono font-bold">
               PWA
             </span>
           </button>
@@ -158,15 +151,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <div className="relative w-4/5 max-w-[280px] bg-slate-950 text-white h-full shadow-2xl p-4 flex flex-col justify-between z-10 animate-in slide-in-from-left duration-200 border-r border-slate-800">
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white text-xs">
-                    G
-                  </div>
-                  <div>
-                    <span className="font-bold text-white text-sm block leading-none">GudangPro</span>
-                    <span className="text-[10px] text-slate-400">QR Inventory System</span>
-                  </div>
-                </div>
+                <PRALogo size="md" showSubtitle />
                 <button
                   onClick={onCloseMobile}
                   className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 cursor-pointer"
@@ -190,12 +175,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                       onClick={() => handleItemClick(item.id as ActiveTab)}
                       className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                         isActive
-                          ? 'bg-slate-800 text-white font-semibold shadow-xs'
+                          ? 'bg-slate-900 text-white font-semibold shadow-xs border-l-2 border-red-500'
                           : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-yellow-400' : 'text-slate-400'}`} />
                         <span>{item.label}</span>
                       </div>
                       {item.badge && (
@@ -218,13 +203,13 @@ export const Navigation: React.FC<NavigationProps> = ({
                     onCloseMobile();
                     onOpenInstall();
                   }}
-                  className="w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-900 to-slate-900 border border-indigo-500/40 text-indigo-100 flex items-center justify-between text-xs font-semibold cursor-pointer"
+                  className="w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-red-950/90 to-slate-900 border border-red-600/40 text-red-100 flex items-center justify-between text-xs font-semibold cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-indigo-400" />
+                    <Smartphone className="w-4 h-4 text-yellow-400" />
                     <span>Install di Smartphone</span>
                   </div>
-                  <span className="text-[10px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.5 rounded font-bold">
+                  <span className="text-[10px] bg-yellow-400/20 text-yellow-300 border border-yellow-400/30 px-1.5 py-0.5 rounded font-bold">
                     PWA
                   </span>
                 </button>
@@ -246,7 +231,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         <button
           onClick={() => onNavigateTab('dashboard')}
           className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-[10px] font-medium transition-colors min-h-[44px] cursor-pointer ${
-            activeTab === 'dashboard' ? 'text-indigo-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'dashboard' ? 'text-yellow-400 font-bold bg-slate-900/80' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <LayoutDashboard className="w-4 h-4 mb-0.5" />
@@ -256,7 +241,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         <button
           onClick={() => onNavigateTab('inventory')}
           className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-[10px] font-medium relative transition-colors min-h-[44px] cursor-pointer ${
-            activeTab === 'inventory' ? 'text-indigo-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'inventory' ? 'text-yellow-400 font-bold bg-slate-900/80' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <Boxes className="w-4 h-4 mb-0.5" />
@@ -269,7 +254,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         <button
           onClick={() => onNavigateTab('scanner')}
           className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-[10px] font-medium transition-colors min-h-[44px] cursor-pointer ${
-            activeTab === 'scanner' ? 'text-indigo-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'scanner' ? 'text-yellow-400 font-bold bg-slate-900/80' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <QrCode className="w-4 h-4 mb-0.5" />
@@ -280,7 +265,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           onClick={() => onNavigateTab('stock-in')}
           className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-[10px] font-medium transition-colors min-h-[44px] cursor-pointer ${
             activeTab === 'stock-in' || activeTab === 'stock-out'
-              ? 'text-indigo-400 font-bold bg-slate-900/60'
+              ? 'text-yellow-400 font-bold bg-slate-900/80'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -291,7 +276,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         <button
           onClick={() => onNavigateTab('reports')}
           className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl text-[10px] font-medium transition-colors min-h-[44px] cursor-pointer ${
-            activeTab === 'reports' ? 'text-indigo-400 font-bold bg-slate-900/60' : 'text-slate-400 hover:text-slate-200'
+            activeTab === 'reports' ? 'text-yellow-400 font-bold bg-slate-900/80' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4 mb-0.5" />

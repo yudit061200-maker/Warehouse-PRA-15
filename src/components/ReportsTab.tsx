@@ -27,6 +27,7 @@ import {
   CheckCircle2,
   Pencil,
   Trash2,
+  MapPin,
 } from 'lucide-react';
 
 interface ReportsTabProps {
@@ -884,7 +885,8 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
                 <thead className="bg-slate-50/80 text-slate-600 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Barang & SKU</th>
-                    <th className="py-3 px-4">Kategori & Lokasi</th>
+                    <th className="py-3 px-4">Kategori</th>
+                    <th className="py-3 px-4">Lokasi Rak</th>
                     <th className="py-3 px-4 text-center">Stok Saat Ini</th>
                     <th className="py-3 px-4 text-center">Batas Min</th>
                     <th className="py-3 px-4 text-center">Defisit Restock</th>
@@ -895,7 +897,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {lowStockItems.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-emerald-700 font-semibold">
+                      <td colSpan={8} className="py-8 text-center text-emerald-700 font-semibold">
                         <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                         Semua stok barang dalam kondisi aman di atas batas minimum.
                       </td>
@@ -907,13 +909,18 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
                         <tr key={it.id} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3.5 px-4">
                             <span className="font-semibold text-slate-900 block">{it.name}</span>
-                            <span className="text-[11px] text-indigo-700 font-mono font-bold">SKU: {it.sku}</span>
+                            <span className="text-[11px] text-red-700 font-mono font-bold">SKU: {it.sku}</span>
                           </td>
                           <td className="py-3.5 px-4">
-                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium block w-fit mb-0.5">
+                            <span className="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200/60 text-slate-800 text-[11px] font-medium block w-fit">
                               {it.category}
                             </span>
-                            <span className="text-[11px] text-slate-500">{it.location}</span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50/70 border border-red-100 text-slate-800 text-[11px] font-mono font-medium">
+                              <MapPin className="w-3 h-3 text-red-600 shrink-0" />
+                              <span>{it.location}</span>
+                            </div>
                           </td>
                           <td className="py-3.5 px-4 text-center font-mono font-bold">
                             <span className={it.quantity === 0 ? 'text-rose-600' : 'text-amber-600'}>
@@ -932,7 +939,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
                           <td className="py-3.5 px-4 text-right">
                             <button
                               onClick={() => onPrintQRCode && onPrintQRCode(it)}
-                              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
                             >
                               <QrCode className="w-3.5 h-3.5" />
                               <span>Cetak QR</span>
@@ -953,17 +960,26 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">{it.name}</h4>
-                      <span className="text-[10px] text-indigo-700 font-mono font-bold">SKU: {it.sku}</span>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className="text-[10px] text-red-700 font-mono font-bold">SKU: {it.sku}</span>
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200/60">
+                          {it.category}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] text-slate-800 bg-red-50 border border-red-100 px-2 py-0.5 rounded font-mono font-medium">
+                          <MapPin className="w-2.5 h-2.5 text-red-600" />
+                          {it.location}
+                        </span>
+                      </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold shrink-0">
                       Sisa: {it.quantity} / Min: {it.minStock}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
                     <span className="text-slate-500 text-[11px]">Supplier: {it.supplier || '-'}</span>
                     <button
                       onClick={() => onPrintQRCode && onPrintQRCode(it)}
-                      className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-lg flex items-center gap-1"
+                      className="px-2.5 py-1 bg-red-50 text-red-700 text-xs font-semibold rounded-lg flex items-center gap-1"
                     >
                       <QrCode className="w-3 h-3" /> Cetak QR
                     </button>

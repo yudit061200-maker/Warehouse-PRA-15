@@ -206,8 +206,10 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     setSelectedCameraId(cameras[nextIndex].id);
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleManualSubmit = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (!manualInput.trim()) return;
     playScanBeep();
     setLastScanned(manualInput.trim());
@@ -293,24 +295,31 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
       {/* Manual Input Form */}
       <div className="p-3 bg-slate-800/80 border-t border-slate-700/60">
-        <form onSubmit={handleManualSubmit} className="flex gap-2">
+        <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={manualInput}
               onChange={(e) => setManualInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleManualSubmit();
+                }
+              }}
               placeholder="Ketik Barcode / SKU manual (atau enter scanner)..."
               className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             />
           </div>
           <button
-            type="submit"
+            type="button"
+            onClick={() => handleManualSubmit()}
             className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition-colors shadow-xs shrink-0 cursor-pointer"
           >
             Cari / Input
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );

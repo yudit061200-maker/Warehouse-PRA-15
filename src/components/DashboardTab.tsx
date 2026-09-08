@@ -57,9 +57,9 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
       <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 lg:p-7 border border-slate-800 shadow-xs relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold tracking-wide">
+            <div className="flex items-center gap-2 text-yellow-400 text-xs font-semibold tracking-wide">
               <Building2 className="w-3.5 h-3.5" />
-              <span>Pusat Kendali Inventaris & Pergudangan</span>
+              <span>Pusat Kendali Inventaris PRA Pergudangan</span>
             </div>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-white">
               Dashboard Performa Gudang
@@ -87,9 +87,9 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </button>
             <button
               onClick={onOpenScanner}
-              className="col-span-2 sm:col-span-1 px-3.5 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer min-h-[40px]"
+              className="col-span-2 sm:col-span-1 px-3.5 py-2.5 sm:py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer min-h-[40px]"
             >
-              <Barcode className="w-4 h-4 shrink-0" />
+              <Barcode className="w-4 h-4 text-yellow-300 shrink-0" />
               <span>Pindai Barcode</span>
             </button>
           </div>
@@ -131,7 +131,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
               <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">
                 Total Stok
               </span>
-              <div className="p-1.5 sm:p-2 rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-red-50 text-red-600 shrink-0">
                 <Boxes className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
@@ -233,17 +233,17 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
       </div>
 
       {/* Google Sheets Reference Banner */}
-      <div className="bg-indigo-50/70 border border-indigo-100/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="bg-red-50/60 border border-red-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
         <div className="flex items-start sm:items-center gap-3.5">
-          <div className="p-3 bg-indigo-600 text-white rounded-xl shadow-xs shrink-0">
-            <Sparkles className="w-5 h-5" />
+          <div className="p-3 bg-red-600 text-white rounded-xl shadow-xs shrink-0">
+            <Sparkles className="w-5 h-5 text-yellow-300" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold text-slate-900">
                 Pedoman Data Acuan & Autofill (Google Sheets)
               </h4>
-              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-800 border border-yellow-400/30 text-[10px] font-bold">
                 Tersinkron
               </span>
             </div>
@@ -256,7 +256,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => onNavigateTab('reference-catalog')}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <span>Buka Katalog Pedoman</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -323,7 +323,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
 
         {/* Quick Barcode Scanner Card */}
         <div className="bg-slate-900 text-white rounded-2xl shadow-xs border border-slate-800 p-6 flex flex-col items-center justify-between text-center space-y-4">
-          <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-indigo-400">
+          <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-yellow-400">
             <Barcode className="w-7 h-7" />
           </div>
           <div>
@@ -351,7 +351,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
 
           <button
             onClick={onOpenScanner}
-            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-xs cursor-pointer"
+            className="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-xs cursor-pointer"
           >
             Buka Pemindai Barcode
           </button>
@@ -371,7 +371,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </div>
             <button
               onClick={() => onNavigateTab('reports')}
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-0.5 cursor-pointer"
+              className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center gap-0.5 cursor-pointer"
             >
               Laporan <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -401,7 +401,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
                   </div>
                   <div className="w-full bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-indigo-600 h-full rounded-full"
+                      className="bg-red-600 h-full rounded-full"
                       style={{ width: `${Math.min(100, item.turnoverRatio)}%` }}
                     />
                   </div>
@@ -422,7 +422,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({
             </div>
             <button
               onClick={() => onNavigateTab('reports')}
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-0.5 cursor-pointer"
+              className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center gap-0.5 cursor-pointer"
             >
               Semua Log <ChevronRight className="w-3.5 h-3.5" />
             </button>

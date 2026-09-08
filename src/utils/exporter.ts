@@ -76,7 +76,7 @@ export function exportInventoryToPDF(items: InventoryItem[], title = 'Laporan St
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('GUDANGPRO - SISTEM MANAJEMEN INVENTORY PERGUDANGAN', 14, 11);
+  doc.text('PRA - SISTEM MANAJEMEN INVENTORY PERGUDANGAN', 14, 11);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
@@ -205,7 +205,7 @@ export function exportTransactionsToPDF(transactions: Transaction[], title = 'La
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('GUDANGPRO - LAPORAN MUTASI ARUS BARANG', 14, 11);
+  doc.text('PRA - LAPORAN MUTASI ARUS BARANG', 14, 11);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');

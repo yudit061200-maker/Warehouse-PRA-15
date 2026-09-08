@@ -11,6 +11,7 @@ import {
   Package,
   Smartphone,
 } from 'lucide-react';
+import { PRALogo } from './PRALogo';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -61,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-6 py-3 transition-all w-full">
       <div className="flex items-center justify-between w-full">
         {/* Left: Mobile Menu Trigger & Breadcrumbs */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {onToggleMobileMenu && (
             <button
               onClick={onToggleMobileMenu}
@@ -72,13 +73,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* Mobile Small Logo */}
+          <div className="md:hidden flex items-center">
+            <PRALogo size="sm" />
+          </div>
+
           {/* Clean Minimalist Breadcrumb */}
-          <div className="flex items-center gap-2 text-xs md:text-sm">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs md:text-sm">
             <span
               onClick={() => onNavigateTab('dashboard')}
-              className="font-medium text-slate-400 hover:text-slate-700 cursor-pointer hidden sm:inline transition-colors"
+              className="font-bold text-slate-900 hover:text-red-600 cursor-pointer hidden sm:inline transition-colors"
             >
-              Gudang
+              PRA
             </span>
             <span className="text-slate-300 hidden sm:inline">/</span>
             <span className="font-semibold text-slate-900 tracking-tight">
@@ -97,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {isSyncing ? (
               <>
-                <RefreshCw className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
+                <RefreshCw className="w-3.5 h-3.5 text-red-600 animate-spin" />
                 <span className="hidden sm:inline">Sinkronisasi Cloud...</span>
               </>
             ) : (
@@ -114,9 +120,9 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenInstall}
               title="Install aplikasi di smartphone Android / iPhone"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-semibold transition-colors cursor-pointer min-h-[36px]"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 text-xs font-semibold transition-colors cursor-pointer min-h-[36px]"
             >
-              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <Smartphone className="w-3.5 h-3.5 text-red-600" />
               <span className="hidden sm:inline">Install di HP</span>
             </button>
           )}
@@ -126,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onQuickScan}
             className="px-2.5 sm:px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 min-h-[36px]"
           >
-            <QrCode className="w-3.5 h-3.5" />
+            <QrCode className="w-3.5 h-3.5 text-yellow-400" />
             <span className="hidden sm:inline">Scan QR</span>
           </button>
 
@@ -232,10 +238,10 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* User Profile Pill */}
           <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200">
-            <div className="w-7 h-7 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center font-bold text-xs text-slate-700">
-              G
+            <div className="w-7 h-7 bg-red-600 text-white rounded-full flex items-center justify-center font-black text-[11px] shadow-xs">
+              P
             </div>
-            <span className="text-xs font-medium text-slate-700">Operator</span>
+            <span className="text-xs font-medium text-slate-700">Operator PRA</span>
           </div>
         </div>
       </div>
