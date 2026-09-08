@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
+  initializeFirestore,
   getFirestore,
+  getDocFromServer,
   collection,
   doc,
   getDocs,
@@ -25,10 +27,39 @@ export const firebaseConfig = firebaseConfigJson;
 // Initialize Firebase App
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Firestore with custom databaseId if configured
-export const db: Firestore = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+// Initialize Firestore with custom databaseId and long-polling for reliable connection in iframes & sandboxes
+export const db: Firestore = (() => {
+  try {
+    return initializeFirestore(
+      app,
+      {
+        experimentalForceLongPolling: true,
+      },
+      firebaseConfig.firestoreDatabaseId || undefined
+    );
+  } catch {
+    return firebaseConfig.firestoreDatabaseId
+      ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+      : getFirestore(app);
+  }
+})();
+
+// Validate connection to Firestore backend as mandated by Firebase Skill
+export async function testConnection(): Promise<boolean> {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.warn('Firebase Firestore client is offline, using offline cache and server API fallback.');
+    } else {
+      console.warn('Firestore connection check notice:', error);
+    }
+    return false;
+  }
+}
+// Run test connection once on boot
+testConnection().catch(() => {});
 
 // Collection References
 export const INVENTORY_COLLECTION = 'inventory';

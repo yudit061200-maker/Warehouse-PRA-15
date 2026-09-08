@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ChevronRight,
   Package,
+  Smartphone,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -19,6 +20,7 @@ interface HeaderProps {
   onQuickScan: () => void;
   onRefreshData: () => void;
   onToggleMobileMenu?: () => void;
+  onOpenInstall?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   onQuickScan,
   onRefreshData,
   onToggleMobileMenu,
+  onOpenInstall,
 }) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
@@ -42,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Pedoman Data (Google Sheets)';
       case 'stock-in':
       case 'stock-out':
-        return 'Log Mutasi Masuk & Keluar';
+        return 'Laporan Barang Masuk & Keluar';
       case 'scanner':
         return 'Pemindai QR Code';
       case 'barcode-generator':
@@ -105,6 +108,18 @@ export const Header: React.FC<HeaderProps> = ({
               </>
             )}
           </button>
+
+          {/* Install Smartphone PWA button */}
+          {onOpenInstall && (
+            <button
+              onClick={onOpenInstall}
+              title="Install aplikasi di smartphone Android / iPhone"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-semibold transition-colors cursor-pointer min-h-[36px]"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Install di HP</span>
+            </button>
+          )}
 
           {/* Quick QR Scanner button */}
           <button

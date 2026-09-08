@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   AlertCircle,
   AlertTriangle,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -41,7 +43,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [selectedItemId, setSelectedItemId] = useState<string>(
     preselectedItem?.id || (items[0]?.id ?? '')
   );
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<number | string>(1);
   const [referenceNumber, setReferenceNumber] = useState<string>('');
   const [partner, setPartner] = useState<string>('');
   const [operator, setOperator] = useState<string>('Petugas Gudang');
@@ -93,13 +95,18 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const unit = currentItem?.unit ?? 'pcs';
   const minStock = currentItem?.minStock ?? 0;
 
+  const numQuantity =
+    typeof quantity === 'number'
+      ? quantity
+      : parseInt(quantity as string, 10) || 0;
+
   const predictedNewStock =
     type === 'IN'
-      ? currentStock + (Number(quantity) || 0)
-      : currentStock - (Number(quantity) || 0);
+      ? currentStock + numQuantity
+      : currentStock - numQuantity;
 
   const willBeLowStock = type === 'OUT' && predictedNewStock <= minStock;
-  const isInvalidOut = type === 'OUT' && quantity > currentStock;
+  const isInvalidOut = type === 'OUT' && numQuantity > currentStock;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,11 +114,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setErrorMessage('Pilih barang terlebih dahulu');
       return;
     }
-    if (quantity <= 0) {
-      setErrorMessage('Jumlah harus lebih dari 0');
+    if (numQuantity <= 0) {
+      setErrorMessage('Jumlah transaksi harus berupa angka positif lebih dari 0');
       return;
     }
-    if (type === 'OUT' && quantity > currentStock) {
+    if (type === 'OUT' && numQuantity > currentStock) {
       setErrorMessage(
         `Stok tidak mencukupi! Stok saat ini: ${currentStock} ${unit}`
       );
@@ -124,7 +131,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       await onSubmit({
         itemId: currentItem.id,
         type,
-        quantity: Number(quantity),
+        quantity: numQuantity,
         referenceNumber: referenceNumber.trim(),
         partner: partner.trim(),
         notes: notes.trim(),
@@ -301,24 +308,96 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Quantity */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Jumlah {type === 'IN' ? 'Barang Masuk' : 'Barang Keluar'} *
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min={1}
-                  max={type === 'OUT' ? currentStock : undefined}
-                  value={quantity}
-                  onChange={(e) =>
-                    setQuantity(Math.max(1, Number(e.target.value) || 0))
-                  }
-                  required
-                  className="w-full px-3 py-2 text-sm md:text-base font-bold border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 font-sans">
-                  {unit}
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700">
+                  Jumlah {type === 'IN' ? 'Barang Masuk' : 'Barang Keluar'} *
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  Ketik manual / klik tombol
                 </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuantity((prev) => Math.max(1, (Number(prev) || 1) - 1))
+                  }
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shrink-0"
+                  title="Kurangi 1"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={type === 'OUT' ? currentStock : undefined}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setQuantity('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        setQuantity(isNaN(parsed) ? '' : parsed);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (quantity === '' || Number(quantity) <= 0) {
+                        setQuantity(1);
+                      }
+                    }}
+                    required
+                    placeholder="Input jumlah..."
+                    className="w-full px-3 py-2 text-center text-base md:text-lg font-bold border-2 border-indigo-200 rounded-xl bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden font-mono"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 font-sans pointer-events-none">
+                    {unit}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuantity((prev) =>
+                      type === 'OUT'
+                        ? Math.min(currentStock, (Number(prev) || 0) + 1)
+                        : (Number(prev) || 0) + 1
+                    )
+                  }
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shrink-0"
+                  title="Tambah 1"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Quick Preset buttons */}
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <span className="text-[10px] text-slate-400 font-medium">Set Cepat:</span>
+                {[1, 5, 10, 25, 50, 100].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setQuantity(preset)}
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer ${
+                      Number(quantity) === preset
+                        ? 'bg-slate-900 text-white shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+                {type === 'OUT' && currentStock > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(currentStock)}
+                    className="px-2 py-0.5 text-[11px] font-semibold rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 transition-colors cursor-pointer ml-auto"
+                    title="Keluarkan seluruh stok barang"
+                  >
+                    Semua ({currentStock})
+                  </button>
+                )}
               </div>
             </div>
 

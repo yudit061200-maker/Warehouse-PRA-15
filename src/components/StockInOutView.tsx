@@ -12,6 +12,7 @@ import {
   Save,
   AlertTriangle,
   History,
+  Printer,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -29,6 +30,7 @@ interface StockInOutViewProps {
     operator?: string;
     unitCost?: number;
   }) => Promise<void>;
+  onPrintLabel?: (item: InventoryItem, category: 'IN' | 'OUT') => void;
 }
 
 export const StockInOutView: React.FC<StockInOutViewProps> = ({
@@ -36,10 +38,11 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
   items,
   transactions,
   onSubmitTransaction,
+  onPrintLabel,
 }) => {
   const [type, setType] = useState<TransactionType>(initialType);
   const [selectedItemId, setSelectedItemId] = useState<string>(items[0]?.id || '');
-  const [quantity, setQuantity] = useState<number>(10);
+  const [quantity, setQuantity] = useState<number | string>(10);
   const [referenceNumber, setReferenceNumber] = useState<string>('');
   const [partner, setPartner] = useState<string>('');
   const [operator] = useState<string>('Operator Gudang');
@@ -54,20 +57,39 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
   const selectedItem = items.find((i) => i.id === selectedItemId);
 
   const handleScanSuccess = (code: string) => {
+    let cleanCode = code.trim();
+    let detectedType: TransactionType | null = null;
+    if (cleanCode.startsWith('IN:')) {
+      detectedType = 'IN';
+      setType('IN');
+      cleanCode = cleanCode.substring(3).trim();
+    } else if (cleanCode.startsWith('OUT:')) {
+      detectedType = 'OUT';
+      setType('OUT');
+      cleanCode = cleanCode.substring(4).trim();
+    }
+
     const found = items.find(
       (i) =>
+        i.barcode === cleanCode ||
         i.barcode === code.trim() ||
-        i.barcode === code ||
+        i.sku.toLowerCase() === cleanCode.toLowerCase() ||
         i.sku.toLowerCase() === code.trim().toLowerCase()
     );
 
     if (found) {
       setSelectedItemId(found.id);
+      const labelText =
+        detectedType === 'IN'
+          ? 'Label Barang Masuk (INBOUND)'
+          : detectedType === 'OUT'
+          ? 'Label Barang Keluar (OUTBOUND)'
+          : 'Barcode Barang';
       setStatusMessage({
         type: 'success',
-        text: `Barang "${found.name}" berhasil terdeteksi via barcode!`,
+        text: `${labelText} "${found.name}" berhasil terdeteksi!`,
       });
-      if (type === 'IN' && found.supplier) {
+      if ((detectedType === 'IN' || type === 'IN') && found.supplier) {
         setPartner(found.supplier);
       }
     } else {
@@ -79,8 +101,13 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
   };
 
   const handleQuickAddQty = (amount: number) => {
-    setQuantity((prev) => Math.max(1, prev + amount));
+    setQuantity((prev) => Math.max(1, (Number(prev) || 0) + amount));
   };
+
+  const numQuantity =
+    typeof quantity === 'number'
+      ? quantity
+      : parseInt(quantity as string, 10) || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,14 +115,14 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
       setStatusMessage({ type: 'error', text: 'Pilih barang terlebih dahulu' });
       return;
     }
-    if (quantity <= 0) {
-      setStatusMessage({ type: 'error', text: 'Jumlah wajib lebih dari 0' });
+    if (numQuantity <= 0) {
+      setStatusMessage({ type: 'error', text: 'Jumlah wajib berupa angka lebih dari 0' });
       return;
     }
-    if (type === 'OUT' && quantity > selectedItem.quantity) {
+    if (type === 'OUT' && numQuantity > selectedItem.quantity) {
       setStatusMessage({
         type: 'error',
-        text: `Stok tidak cukup! Tersedia: ${selectedItem.quantity} ${selectedItem.unit}, diminta: ${quantity} ${selectedItem.unit}`,
+        text: `Stok tidak cukup! Tersedia: ${selectedItem.quantity} ${selectedItem.unit}, diminta: ${numQuantity} ${selectedItem.unit}`,
       });
       return;
     }
@@ -114,7 +141,7 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
       await onSubmitTransaction({
         itemId: selectedItem.id,
         type,
-        quantity: Number(quantity),
+        quantity: numQuantity,
         referenceNumber: refNo,
         partner:
           partner.trim() ||
@@ -132,7 +159,7 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
         type: 'success',
         text: `Berhasil mencatat ${
           type === 'IN' ? 'Pemasukan' : 'Pengeluaran'
-        } ${quantity} ${selectedItem.unit} untuk ${selectedItem.name}!`,
+        } ${numQuantity} ${selectedItem.unit} untuk ${selectedItem.name}!`,
       });
 
       setQuantity(10);
@@ -152,7 +179,7 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
   const unit = selectedItem?.unit ?? 'pcs';
   const minStock = selectedItem?.minStock ?? 0;
   const newStock =
-    type === 'IN' ? currentStock + quantity : currentStock - quantity;
+    type === 'IN' ? currentStock + numQuantity : currentStock - numQuantity;
 
   return (
     <div className="space-y-6 w-full pb-10">
@@ -263,49 +290,111 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
 
             {/* Quantity */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Jumlah {type === 'IN' ? 'Masuk' : 'Keluar'} ({unit})
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700">
+                  Jumlah {type === 'IN' ? 'Barang Masuk' : 'Barang Keluar'} ({unit})
+                </label>
+                <span className="text-[11px] font-mono text-slate-500">
+                  Stok saat ini: <strong>{currentStock} {unit}</strong>
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer"
+                  onClick={() =>
+                    setQuantity((prev) => Math.max(1, (Number(prev) || 1) - 1))
+                  }
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shrink-0"
+                  title="Kurangi 1"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <input
-                  type="number"
-                  min={1}
-                  max={type === 'OUT' ? currentStock : undefined}
-                  value={quantity}
-                  onChange={(e) =>
-                    setQuantity(Math.max(1, Number(e.target.value) || 0))
-                  }
-                  className="flex-1 px-4 py-2 text-center text-lg font-bold border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
-                />
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={type === 'OUT' ? currentStock : undefined}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setQuantity('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        setQuantity(isNaN(parsed) ? '' : parsed);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (quantity === '' || Number(quantity) <= 0) {
+                        setQuantity(1);
+                      }
+                    }}
+                    placeholder="Ketik manual..."
+                    className="w-full px-4 py-2 text-center text-lg font-bold border-2 border-indigo-200 rounded-xl bg-white text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 font-sans pointer-events-none">
+                    {unit}
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setQuantity((prev) => prev + 1)}
-                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer"
+                  onClick={() =>
+                    setQuantity((prev) =>
+                      type === 'OUT'
+                        ? Math.min(currentStock, (Number(prev) || 0) + 1)
+                        : (Number(prev) || 0) + 1
+                    )
+                  }
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shrink-0"
+                  title="Tambah 1"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Quick increment chips */}
-              <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto">
-                <span className="text-[11px] text-slate-400 font-medium">Tambah:</span>
-                {[+5, +10, +25, +50, +100].map((inc) => (
-                  <button
-                    key={inc}
-                    type="button"
-                    onClick={() => handleQuickAddQty(inc)}
-                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                  >
-                    +{inc}
-                  </button>
-                ))}
+              {/* Exact Preset and increment chips */}
+              <div className="space-y-1.5 mt-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400 font-medium">Set Angka:</span>
+                  {[1, 2, 5, 10, 25, 50, 100].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setQuantity(preset)}
+                      className={`px-2 py-0.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                        Number(quantity) === preset
+                          ? 'bg-slate-900 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                  {type === 'OUT' && currentStock > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(currentStock)}
+                      className="px-2 py-0.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-800 hover:bg-rose-200 transition-colors cursor-pointer ml-auto"
+                      title="Keluarkan seluruh sisa stok"
+                    >
+                      Semua ({currentStock})
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400 font-medium">Tambah:</span>
+                  {[+5, +10, +25, +50].map((inc) => (
+                    <button
+                      key={inc}
+                      type="button"
+                      onClick={() => handleQuickAddQty(inc)}
+                      className="px-2 py-0.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-md transition-colors cursor-pointer"
+                    >
+                      +{inc}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -414,6 +503,21 @@ export const StockInOutView: React.FC<StockInOutViewProps> = ({
                 <p>💰 Harga Satuan: <strong className="text-slate-800 font-medium font-mono">{formatRupiah(selectedItem.unitPrice)}</strong></p>
                 <p>⚠️ Batas Stok Minimum: <strong className="text-slate-800 font-medium">{selectedItem.minStock} {unit}</strong></p>
               </div>
+
+              {onPrintLabel && (
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => onPrintLabel(selectedItem, type)}
+                    className="w-full py-2.5 px-3 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>
+                      Cetak Label {type === 'IN' ? 'Barang Masuk (IN)' : 'Barang Keluar (OUT)'}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

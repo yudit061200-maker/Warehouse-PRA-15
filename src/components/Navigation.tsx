@@ -9,6 +9,7 @@ import {
   FileSpreadsheet,
   X,
   Sparkles,
+  Smartphone,
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -17,6 +18,7 @@ interface NavigationProps {
   lowStockCount: number;
   isMobileOpen: boolean;
   onCloseMobile: () => void;
+  onOpenInstall?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -25,6 +27,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   lowStockCount,
   isMobileOpen,
   onCloseMobile,
+  onOpenInstall,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -40,7 +43,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       icon: Sparkles,
       isHighlight: true,
     },
-    { id: 'stock-in', label: 'Log Mutasi', icon: ArrowDownLeft },
+    { id: 'stock-in', label: 'Laporan Barang Masuk & Keluar', icon: ArrowDownLeft },
     { id: 'scanner', label: 'Pemindai QR Code', icon: QrCode },
     { id: 'barcode-generator', label: 'Cetak Sheet QR Code', icon: Tag },
     { id: 'reports', label: 'Laporan & Ekspor', icon: FileSpreadsheet },
@@ -116,6 +119,23 @@ export const Navigation: React.FC<NavigationProps> = ({
           </nav>
         </div>
 
+        {/* Install Smartphone App Button */}
+        {onOpenInstall && (
+          <button
+            type="button"
+            onClick={onOpenInstall}
+            className="w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-950/90 to-slate-900 border border-indigo-500/40 hover:border-indigo-400 text-indigo-200 hover:text-white flex items-center justify-between transition-all cursor-pointer group shadow-xs"
+          >
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <Smartphone className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+              <span>Install di Smartphone</span>
+            </div>
+            <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono font-bold">
+              PWA
+            </span>
+          </button>
+        )}
+
         {/* Bottom Status */}
         <div className="p-2.5 lg:p-3 bg-slate-900/60 rounded-xl border border-slate-800/60 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -189,10 +209,32 @@ export const Navigation: React.FC<NavigationProps> = ({
               </nav>
             </div>
 
-            <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="font-mono text-slate-300 text-[11px]">Sistem QR Aktif</span>
+            {/* Mobile Drawer Install Button & Status */}
+            <div className="space-y-2">
+              {onOpenInstall && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onCloseMobile();
+                    onOpenInstall();
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-900 to-slate-900 border border-indigo-500/40 text-indigo-100 flex items-center justify-between text-xs font-semibold cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-indigo-400" />
+                    <span>Install di Smartphone</span>
+                  </div>
+                  <span className="text-[10px] bg-indigo-500/30 text-indigo-200 px-1.5 py-0.5 rounded font-bold">
+                    PWA
+                  </span>
+                </button>
+              )}
+
+              <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="font-mono text-slate-300 text-[11px]">Sistem QR Aktif</span>
+                </div>
               </div>
             </div>
           </div>
@@ -243,7 +285,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           }`}
         >
           <ArrowDownLeft className="w-4 h-4 mb-0.5" />
-          <span>Mutasi</span>
+          <span>Masuk/Keluar</span>
         </button>
 
         <button

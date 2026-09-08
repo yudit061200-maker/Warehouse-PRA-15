@@ -1,54 +1,95 @@
 {
   "entities": {
     "InventoryItem": {
-      "collection": "inventory",
-      "fields": {
-        "id": { "type": "string" },
-        "sku": { "type": "string" },
-        "barcode": { "type": "string" },
-        "name": { "type": "string" },
-        "category": { "type": "string" },
-        "quantity": { "type": "number" },
-        "minStock": { "type": "number" },
-        "unit": { "type": "string" },
-        "unitPrice": { "type": "number" },
-        "location": { "type": "string" },
-        "supplier": { "type": "string" },
-        "description": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "lastUpdated": { "type": "string" }
-      }
+      "title": "InventoryItem",
+      "description": "Master data barang gudang dan kuantitas stok",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik item" },
+        "sku": { "type": "string", "description": "Kode SKU barang" },
+        "barcode": { "type": "string", "description": "Kode barcode / QR" },
+        "name": { "type": "string", "description": "Nama barang" },
+        "category": { "type": "string", "description": "Kategori barang" },
+        "quantity": { "type": "number", "description": "Stok fisik saat ini" },
+        "minStock": { "type": "number", "description": "Batas minimum stok" },
+        "unit": { "type": "string", "description": "Satuan unit barang" },
+        "unitPrice": { "type": "number", "description": "Harga satuan barang" },
+        "location": { "type": "string", "description": "Lokasi rak atau zona gudang" },
+        "supplier": { "type": "string", "description": "Nama pemasok barang" },
+        "description": { "type": "string", "description": "Deskripsi atau catatan barang" },
+        "createdAt": { "type": "string", "description": "Waktu pembuatan data ISO" },
+        "lastUpdated": { "type": "string", "description": "Waktu pembaruan terakhir ISO" }
+      },
+      "required": ["id", "sku", "name", "quantity", "unit"]
     },
     "Transaction": {
-      "collection": "transactions",
-      "fields": {
-        "id": { "type": "string" },
-        "itemId": { "type": "string" },
-        "itemSku": { "type": "string" },
-        "itemName": { "type": "string" },
-        "type": { "type": "string" },
-        "quantity": { "type": "number" },
-        "previousStock": { "type": "number" },
-        "newStock": { "type": "number" },
-        "referenceNumber": { "type": "string" },
-        "partner": { "type": "string" },
-        "notes": { "type": "string" },
-        "operator": { "type": "string" },
-        "timestamp": { "type": "string" },
-        "unitCost": { "type": "number" }
-      }
+      "title": "Transaction",
+      "description": "Riwayat mutasi keluar masuk barang pergudangan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik transaksi" },
+        "itemId": { "type": "string", "description": "ID item terkait" },
+        "itemSku": { "type": "string", "description": "SKU item terkait" },
+        "itemName": { "type": "string", "description": "Nama item terkait" },
+        "type": { "type": "string", "enum": ["IN", "OUT", "ADJUSTMENT"], "description": "Jenis transaksi" },
+        "quantity": { "type": "number", "description": "Jumlah barang dalam transaksi" },
+        "previousStock": { "type": "number", "description": "Stok sebelum transaksi" },
+        "newStock": { "type": "number", "description": "Stok setelah transaksi" },
+        "referenceNumber": { "type": "string", "description": "Nomor referensi / PO / DO" },
+        "partner": { "type": "string", "description": "Pemasok atau penerima barang" },
+        "notes": { "type": "string", "description": "Catatan transaksi" },
+        "operator": { "type": "string", "description": "Nama staf operator pencatat" },
+        "timestamp": { "type": "string", "description": "Waktu transaksi ISO" },
+        "unitCost": { "type": "number", "description": "Harga modal per unit" }
+      },
+      "required": ["id", "itemId", "type", "quantity", "timestamp"]
     },
     "ReferenceCatalog": {
-      "collection": "reference_catalog",
-      "fields": {
-        "id": { "type": "string" },
-        "code": { "type": "string" },
-        "name": { "type": "string" },
-        "category": { "type": "string" },
-        "unit": { "type": "string" },
-        "barcode": { "type": "string" },
-        "description": { "type": "string" }
+      "title": "ReferenceCatalog",
+      "description": "Katalog acuan data barang dari master database atau Google Sheets",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID unik referensi" },
+        "code": { "type": "string", "description": "Kode referensi atau SKU" },
+        "name": { "type": "string", "description": "Nama acuan barang" },
+        "category": { "type": "string", "description": "Kategori acuan" },
+        "unit": { "type": "string", "description": "Satuan acuan" },
+        "barcode": { "type": "string", "description": "Barcode acuan" },
+        "description": { "type": "string", "description": "Keterangan acuan" }
+      },
+      "required": ["id", "code", "name"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Pengaturan sistem gudang dan metadata inisialisasi",
+      "type": "object",
+      "properties": {
+        "seeded": { "type": "boolean", "description": "Status inisialisasi awal database" },
+        "seededAt": { "type": "string", "description": "Waktu inisialisasi awal" },
+        "version": { "type": "string", "description": "Versi skema aplikasi" }
       }
+    }
+  },
+  "firestore": {
+    "/inventory/{itemId}": {
+      "schema": "InventoryItem",
+      "description": "Koleksi data stok barang pergudangan"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Koleksi pencatatan mutasi transaksi barang"
+    },
+    "/reference_catalog/{refId}": {
+      "schema": "ReferenceCatalog",
+      "description": "Koleksi acuan katalog referensi barang"
+    },
+    "/settings/{settingId}": {
+      "schema": "Settings",
+      "description": "Koleksi pengaturan dan status inisialisasi"
+    },
+    "/test/{testId}": {
+      "schema": "Settings",
+      "description": "Dokumen uji koneksi backend Firestore"
     }
   }
 }

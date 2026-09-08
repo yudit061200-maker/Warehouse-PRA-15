@@ -21,6 +21,8 @@ import { TransactionModal } from './components/TransactionModal';
 import { QuickScanModal } from './components/QuickScanModal';
 import { EditTransactionModal } from './components/EditTransactionModal';
 import { DeleteTransactionModal } from './components/DeleteTransactionModal';
+import { PWAInstallModal } from './components/PWAInstallModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { Trash2, AlertTriangle, CheckCircle2, Info, X, Package, QrCode } from 'lucide-react';
 
 const LOCAL_STORAGE_ITEMS_KEY = 'gudangpro_inventory_items_cache';
@@ -63,8 +65,11 @@ export default function App() {
 
   const [isBarcodeGenOpen, setIsBarcodeGenOpen] = useState<boolean>(false);
   const [barcodeGenItem, setBarcodeGenItem] = useState<InventoryItem | null>(null);
+  const [barcodeGenBatchItems, setBarcodeGenBatchItems] = useState<InventoryItem[] | undefined>(undefined);
+  const [barcodeGenCategory, setBarcodeGenCategory] = useState<'IN' | 'OUT' | 'GENERAL'>('IN');
 
   const [isQuickScanOpen, setIsQuickScanOpen] = useState<boolean>(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
   // Transaction Edit & Delete Modals state
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -295,6 +300,7 @@ export default function App() {
         lowStockItems={lowStockItems}
         isSyncing={isSyncing}
         onQuickScan={() => setIsQuickScanOpen(true)}
+        onOpenInstall={() => setIsInstallModalOpen(true)}
         onRefreshData={loadData}
         onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
@@ -308,6 +314,7 @@ export default function App() {
           lowStockCount={lowStockItems.length}
           isMobileOpen={isMobileMenuOpen}
           onCloseMobile={() => setIsMobileMenuOpen(false)}
+          onOpenInstall={() => setIsInstallModalOpen(true)}
         />
 
         {/* Dynamic Tab Views */}
@@ -357,8 +364,16 @@ export default function App() {
                 setTxModalItem(item);
                 setIsTxModalOpen(true);
               }}
-              onPrintBarcode={(item) => {
+              onPrintBarcode={(item, cat) => {
                 setBarcodeGenItem(item);
+                setBarcodeGenBatchItems(undefined);
+                if (cat) setBarcodeGenCategory(cat);
+                setIsBarcodeGenOpen(true);
+              }}
+              onPrintBatchQR={(selectedBatch, cat) => {
+                setBarcodeGenItem(null);
+                setBarcodeGenBatchItems(selectedBatch);
+                if (cat) setBarcodeGenCategory(cat);
                 setIsBarcodeGenOpen(true);
               }}
             />
@@ -370,6 +385,12 @@ export default function App() {
               items={items}
               transactions={transactions}
               onSubmitTransaction={handleRecordTransaction}
+              onPrintLabel={(item, cat) => {
+                setBarcodeGenItem(item);
+                setBarcodeGenBatchItems(undefined);
+                setBarcodeGenCategory(cat);
+                setIsBarcodeGenOpen(true);
+              }}
             />
           )}
 
@@ -387,8 +408,10 @@ export default function App() {
                 setIsTxModalOpen(true);
               }}
               onEditItem={(item) => setEditingItem(item)}
-              onPrintBarcode={(item) => {
+              onPrintBarcode={(item, cat) => {
                 setBarcodeGenItem(item);
+                setBarcodeGenBatchItems(undefined);
+                if (cat) setBarcodeGenCategory(cat);
                 setIsBarcodeGenOpen(true);
               }}
               onQuickMutate={handleQuickMutate}
@@ -610,9 +633,12 @@ export default function App() {
         <BarcodeGeneratorModal
           items={items}
           selectedItem={barcodeGenItem}
+          initialBatchItems={barcodeGenBatchItems}
+          initialLabelCategory={barcodeGenCategory}
           onClose={() => {
             setIsBarcodeGenOpen(false);
             setBarcodeGenItem(null);
+            setBarcodeGenBatchItems(undefined);
           }}
         />
       )}
@@ -692,6 +718,15 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* PWA Install Modal */}
+      <PWAInstallModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+      />
+
+      {/* Offline Status Badge */}
+      <OfflineIndicator />
     </div>
   );
 }
