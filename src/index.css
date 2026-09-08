@@ -1,11 +1,7 @@
 @import "tailwindcss";
 
 @media print {
-  @page {
-    size: auto;
-    margin: 8mm 6mm;
-  }
-
+  /* 1. Reset root documents */
   html,
   body {
     background: #ffffff !important;
@@ -17,6 +13,30 @@
     overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* 2. Hide ALL application UI elements by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* 3. ONLY the printable sheet container and its descendants are visible */
+  #printable-sheet-area,
+  #printable-sheet-area * {
+    visibility: visible !important;
+  }
+
+  /* 4. Position the printable sheet area at the top-left of the physical paper */
+  #printable-sheet-area {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    z-index: 9999999 !important;
   }
 
   /* Completely suppress everything outside the printable label sheet */
@@ -50,3 +70,4 @@
     page-break-after: auto !important;
   }
 }
+

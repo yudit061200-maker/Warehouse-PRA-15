@@ -134,8 +134,8 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
   const [batchSearch, setBatchSearch] = useState<string>('');
   const [batchFilter, setBatchFilter] = useState<'all' | 'selected' | 'in_stock'>('all');
 
-  // Single / Uniform copies per item
-  const [copiesPerItem, setCopiesPerItem] = useState<number>(12);
+  // Single / Uniform copies per item (default 1 label satuan)
+  const [copiesPerItem, setCopiesPerItem] = useState<number>(1);
 
   // Sheet layout
   const [sheetLayout, setSheetLayout] = useState<SheetLayoutType>('grid-24');
@@ -385,7 +385,12 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
   };
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = ' ';
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   };
 
   // Estimated sheets calculation
@@ -425,28 +430,28 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
   const getGridClasses = () => {
     switch (sheetLayout) {
       case 'grid-12':
-        return 'grid grid-cols-2 gap-2 text-xs';
+        return 'grid grid-cols-2 gap-x-[3mm] gap-y-[2.5mm] w-full text-xs';
       case 'grid-40':
-        return 'grid grid-cols-4 gap-1 text-[8.5px]';
+        return 'grid grid-cols-4 gap-x-[1.2mm] gap-y-[1.2mm] w-full text-[7.5px]';
       case 'thermal':
-        return 'flex flex-col gap-0 items-center justify-center';
+        return 'flex flex-col gap-0 items-center justify-center w-full';
       case 'grid-24':
       default:
-        return 'grid grid-cols-3 gap-1.5 text-[9.5px]';
+        return 'grid grid-cols-3 gap-x-[2mm] gap-y-[1.8mm] w-full text-[8.5px]';
     }
   };
 
   const getQRSizeForLayout = () => {
     switch (sheetLayout) {
       case 'grid-12':
-        return 85;
+        return 65;
       case 'grid-40':
-        return 45;
+        return 34;
       case 'thermal':
-        return 72;
+        return 56;
       case 'grid-24':
       default:
-        return 60;
+        return 46;
     }
   };
 
@@ -455,7 +460,15 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
       {/* ========================================================= */}
       {/* PRINTABLE SHEET CONTAINER (VISIBLE ONLY IN PRINT DIALOG) */}
       {/* ========================================================= */}
-      <div className="hidden print:block w-full bg-white text-black p-0 m-0 print:static">
+      <div id="printable-sheet-area" className="hidden print:block w-full bg-white text-black p-0 m-0 print:static">
+        <style>{`
+          @media print {
+            @page {
+              size: ${sheetLayout === 'thermal' ? '50mm 40mm' : 'A4 portrait'};
+              margin: ${sheetLayout === 'thermal' ? '0mm' : '6mm 5mm'};
+            }
+          }
+        `}</style>
         {pagedPrintItems.map((pageItems, pageIdx) => {
           const isLastPage = pageIdx === pagedPrintItems.length - 1;
           return (
@@ -466,8 +479,24 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                   ? 'break-after-page page-break-after-always'
                   : 'break-after-auto page-break-after-avoid'
               }`}
+              style={{
+                height: sheetLayout === 'thermal' ? '38mm' : '274mm',
+                maxHeight: sheetLayout === 'thermal' ? '38mm' : '274mm',
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                margin: sheetLayout === 'thermal' ? '0 auto' : '0',
+                padding: 0,
+              }}
             >
-              <div className={getGridClasses()}>
+              <div
+                className={getGridClasses()}
+                style={{
+                  height: sheetLayout === 'thermal' ? '38mm' : '274mm',
+                  maxHeight: sheetLayout === 'thermal' ? '38mm' : '274mm',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                }}
+              >
                 {pageItems.map((it) => {
                   const packInfo = getLabelContentQty(it);
                   const partnerDisplay = partnerName || (it as any).supplier || '';
@@ -475,45 +504,45 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                   return (
                     <div
                       key={it.uniqueKey}
-                      className={`border border-black rounded-md p-1.5 flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${
+                      className={`border border-black rounded-sm flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${
                         sheetLayout === 'thermal'
-                          ? 'w-[50mm] h-[38mm] mx-auto mb-0'
+                          ? 'w-[48mm] h-[38mm] max-h-[38mm] p-[1.5mm] mx-auto'
                           : sheetLayout === 'grid-12'
-                          ? 'h-[43mm] max-h-[44mm]'
+                          ? 'h-[42mm] max-h-[42mm] p-[2mm]'
                           : sheetLayout === 'grid-40'
-                          ? 'h-[25mm] max-h-[26mm]'
-                          : 'h-[32.5mm] max-h-[33mm]'
+                          ? 'h-[24.5mm] max-h-[24.5mm] p-[1mm]'
+                          : 'h-[32mm] max-h-[32mm] p-[1.2mm]'
                       }`}
                     >
                       {/* Distinct Label Header for Inbound / Outbound / General */}
                       <div className="w-full mb-0.5">
                         {labelCategory === 'IN' ? (
-                          <div className="border-b-2 border-black pb-0.5 flex items-center justify-between px-1">
-                            <span className="text-[8px] font-black uppercase tracking-wider text-black flex items-center gap-1">
+                          <div className="border-b border-black pb-0.5 flex items-center justify-between px-0.5">
+                            <span className="text-[7.5px] font-black uppercase tracking-wider text-black flex items-center gap-0.5 leading-none">
                               <span>▼</span>
                               <span>BARANG MASUK</span>
                             </span>
-                            <span className="text-[7px] font-bold uppercase tracking-tight text-black border border-black px-1 rounded-xs">
+                            <span className="text-[6.5px] font-bold uppercase tracking-tight text-black border border-black px-0.5 rounded-xs leading-none">
                               PENERIMAAN
                             </span>
                           </div>
                         ) : labelCategory === 'OUT' ? (
-                          <div className="border-b-2 border-black pb-0.5 flex items-center justify-between px-1">
-                            <span className="text-[8px] font-black uppercase tracking-wider text-black flex items-center gap-1">
+                          <div className="border-b border-black pb-0.5 flex items-center justify-between px-0.5">
+                            <span className="text-[7.5px] font-black uppercase tracking-wider text-black flex items-center gap-0.5 leading-none">
                               <span>▲</span>
                               <span>BARANG KELUAR</span>
                             </span>
-                            <span className="text-[7px] font-bold uppercase tracking-tight text-black border border-black px-1 rounded-xs">
+                            <span className="text-[6.5px] font-bold uppercase tracking-tight text-black border border-black px-0.5 rounded-xs leading-none">
                               PENGELUARAN / SJ
                             </span>
                           </div>
                         ) : (
                           labelConfig.showBrand && (
-                            <div className="border-b border-black pb-0.5 flex items-center justify-between px-1">
-                              <span className="text-[7px] font-extrabold uppercase tracking-widest text-black">
+                            <div className="border-b border-black pb-0.5 flex items-center justify-between px-0.5">
+                              <span className="text-[7px] font-extrabold uppercase tracking-wider text-black leading-none">
                                 PRA LOGISTICS
                               </span>
-                              <span className="text-[7px] font-bold text-black font-mono">RAK STOK</span>
+                              <span className="text-[6.5px] font-bold text-black font-mono leading-none">RAK STOK</span>
                             </div>
                           )
                         )}
@@ -521,13 +550,13 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
 
                       {/* Item Name */}
                       {labelConfig.showTitle && (
-                        <span className="font-bold leading-tight line-clamp-1 w-full text-black text-[9.5px]">
+                        <span className="font-bold leading-tight truncate w-full text-black text-[8.5px]">
                           {it.name}
                         </span>
                       )}
 
                       {/* QR Code Renderer */}
-                      <div className="my-0.5 flex items-center justify-center">
+                      <div className="my-0.5 flex items-center justify-center shrink-0">
                         <QRCodeRenderer
                           value={it.encodedQr}
                           size={getQRSizeForLayout()}
@@ -538,36 +567,31 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                       {/* Footer Details */}
                       <div className="w-full space-y-0.5 text-black">
                         {labelConfig.showSku && (
-                          <span className="font-mono font-black tracking-wider block text-[9.5px] leading-tight">
+                          <span className="font-mono font-black tracking-wider block text-[8px] leading-tight truncate">
                             {it.sku}
                           </span>
                         )}
 
                         {/* Manual Quantity Content printed on label */}
                         {labelConfig.showQuantity && (
-                          <div className="text-[7.5px] font-bold font-mono border border-black/80 py-0.5 px-1 rounded-xs bg-slate-50 my-0.5">
-                            <span>JUMLAH / ISI: </span>
+                          <div className="text-[6.5px] font-bold font-mono border border-black/80 py-0.2 px-1 rounded-xs bg-slate-50 my-0.2 leading-tight">
+                            <span>ISI: </span>
                             <span className="font-black underline">{packInfo.text}</span>
                           </div>
                         )}
 
                         {/* Document and location metadata */}
-                        <div className="flex flex-wrap items-center justify-center gap-1 text-[7px] font-mono leading-tight">
+                        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-0 text-[6px] font-mono leading-tight truncate">
                           {labelConfig.showDocNumber && docNumber && (
                             <span className="font-semibold">
-                              {labelCategory === 'OUT' ? 'SJ:' : 'REF:'} {docNumber}
+                              {labelCategory === 'OUT' ? 'SJ:' : 'REF:'}{docNumber}
                             </span>
-                          )}
-                          {labelConfig.showDate && docDate && (
-                            <span>• TGL: {docDate}</span>
                           )}
                           {labelConfig.showLocation && (
-                            <span>• RAK: {it.location}</span>
+                            <span>• RAK:{it.location}</span>
                           )}
-                          {labelConfig.showPartner && partnerDisplay && (
-                            <span className="line-clamp-1">
-                              • {labelCategory === 'OUT' ? 'TJN:' : 'SUP:'} {partnerDisplay}
-                            </span>
+                          {labelConfig.showDate && docDate && (
+                            <span>• {docDate}</span>
                           )}
                           {labelCategory === 'GENERAL' && labelConfig.showPrice && it.unitPrice > 0 && (
                             <span>• {formatRupiah(it.unitPrice)}</span>
@@ -858,14 +882,51 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
 
                 {/* Input Jumlah Lembar Cetak Manual */}
                 <div className="p-3.5 bg-indigo-50/40 rounded-2xl border border-indigo-100">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <Boxes className="w-4 h-4 text-indigo-600" />
-                      <span>Input Jumlah Lembar Label (Manual):</span>
+                      <span>Jumlah Label yang Ingin Dicetak:</span>
                     </label>
-                    <span className="text-[11px] font-bold text-indigo-700 font-mono">
-                      {copiesPerItem} Salinan
+                    <span className="text-[11px] font-bold text-indigo-700 font-mono bg-indigo-100/60 px-2 py-0.5 rounded-md">
+                      {copiesPerItem} Label ({getEstimatedSheets()} Lembar {sheetLayout === 'thermal' ? 'Roll' : 'A4'})
                     </span>
+                  </div>
+
+                  {/* Primary Quick Options */}
+                  <div className="grid grid-cols-3 gap-1.5 mb-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setCopiesPerItem(1)}
+                      className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
+                        copiesPerItem === 1
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50'
+                      }`}
+                    >
+                      1 Label (Satuan)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCopiesPerItem(itemsPerPage)}
+                      className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
+                        copiesPerItem === itemsPerPage
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-indigo-50'
+                      }`}
+                    >
+                      1 Lembar Pas ({itemsPerPage}x)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCopiesPerItem(singleItem?.quantity && singleItem.quantity > 0 ? singleItem.quantity : 1)}
+                      className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all border text-center cursor-pointer ${
+                        singleItem?.quantity && copiesPerItem === singleItem.quantity
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50'
+                      }`}
+                    >
+                      Sesuai Stok ({singleItem?.quantity || 1}x)
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -898,10 +959,10 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Preset Buttons */}
+                  {/* Additional Preset Multiples */}
                   <div className="flex flex-wrap items-center gap-1 mt-2">
-                    <span className="text-[10px] text-slate-400 font-medium mr-1">Preset:</span>
-                    {[1, 2, 5, 10, 24, 48, 100].map((qty) => (
+                    <span className="text-[10px] text-slate-400 font-medium mr-1">Kelipatan:</span>
+                    {[2, 5, 10, itemsPerPage * 2, itemsPerPage * 3, 100].map((qty) => (
                       <button
                         key={qty}
                         type="button"
@@ -915,16 +976,6 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                         {qty}x
                       </button>
                     ))}
-                    {singleItem && singleItem.quantity > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setCopiesPerItem(singleItem.quantity)}
-                        className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer ml-auto"
-                        title="Set salinan cetak sesuai jumlah stok saat ini"
-                      >
-                        Stok Fisik ({singleItem.quantity}x)
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
