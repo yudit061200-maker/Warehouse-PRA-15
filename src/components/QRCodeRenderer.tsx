@@ -38,7 +38,7 @@ export const QRCodeRenderer: React.FC<QRCodeRendererProps> = ({
         className="rounded"
       />
       {title && (
-        <span className="text-[11px] font-bold text-slate-900 mt-1 max-w-[130px] truncate text-center block">
+        <span className="text-[11px] font-bold text-slate-900 mt-1 max-w-[180px] line-clamp-2 leading-tight break-words text-center block">
           {title}
         </span>
       )}

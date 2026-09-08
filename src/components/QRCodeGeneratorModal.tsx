@@ -30,6 +30,7 @@ import {
   Calendar,
   Hash,
   User,
+  Type,
 } from 'lucide-react';
 
 export type LabelCategory = 'IN' | 'OUT' | 'GENERAL';
@@ -150,6 +151,9 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
 
   // Sheet layout: default 'auto' so label size adapts dynamically to the desired quantity
   const [sheetLayout, setSheetLayout] = useState<SheetLayoutType>('auto');
+
+  // Font size mode for item name: 'auto' (adaptive anti-cutoff), 'standard', or 'compact'
+  const [titleFontSize, setTitleFontSize] = useState<'auto' | 'standard' | 'compact'>('auto');
 
   // Toggleable elements on label
   const [labelConfig, setLabelConfig] = useState<LabelConfig>({
@@ -510,25 +514,101 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
   const getQRSizeForLayout = () => {
     switch (effectiveLayout) {
       case 'single-large':
-        return 96;
+        return 92;
       case 'grid-2':
-        return 78;
+        return 74;
       case 'grid-4':
-        return 64;
+        return 60;
       case 'grid-6':
-        return 54;
-      case 'grid-12':
-        return 42;
-      case 'grid-40':
-        return 24;
-      case 'thermal':
-        return 38;
-      case 'thermal-80':
         return 50;
+      case 'grid-12':
+        return 38;
+      case 'grid-40':
+        return 22;
+      case 'thermal':
+        return 34;
+      case 'thermal-80':
+        return 46;
       case 'grid-24':
       default:
-        return 34;
+        return 30;
     }
+  };
+
+  // Helper to determine item name typography classes without truncating / cutting off text
+  const getItemNameClasses = (name: string) => {
+    const len = (name || '').length;
+    const isLarge = effectiveLayout === 'single-large' || effectiveLayout === 'grid-2';
+    const isMedium = effectiveLayout === 'grid-4' || effectiveLayout === 'grid-6';
+    const isGrid12 = effectiveLayout === 'grid-12';
+    const isGrid40 = effectiveLayout === 'grid-40';
+    const isThermal = effectiveLayout === 'thermal';
+    const isThermal80 = effectiveLayout === 'thermal-80';
+
+    // Base styling: pure black, multi-line wrap with word-breaking, never clipped by truncate
+    const base = 'font-black w-full text-black block leading-tight break-words text-center hyphens-auto shrink-0';
+
+    if (titleFontSize === 'compact') {
+      if (isLarge) return `${base} text-xs leading-snug line-clamp-3 mb-1`;
+      if (isMedium) return `${base} text-[10px] line-clamp-3 mb-0.5`;
+      if (isThermal80) return `${base} text-[9px] line-clamp-3 mb-0.5`;
+      if (isThermal) return `${base} text-[7.5px] line-clamp-3 mb-0.5`;
+      if (isGrid12) return `${base} text-[8px] line-clamp-3 mb-0.5`;
+      if (isGrid40) return `${base} text-[5px] leading-[1.1] line-clamp-2 my-0.2`;
+      return `${base} text-[6.8px] line-clamp-3 my-0.2`;
+    }
+
+    if (titleFontSize === 'standard') {
+      if (isLarge) return `${base} text-sm leading-snug line-clamp-2 mb-1`;
+      if (isMedium) return `${base} text-xs line-clamp-2 mb-0.5`;
+      if (isThermal80) return `${base} text-[10.5px] line-clamp-2 mb-0.5`;
+      if (isThermal) return `${base} text-[8.5px] line-clamp-2 mb-0.5`;
+      if (isGrid12) return `${base} text-[9.5px] line-clamp-2 mb-0.5`;
+      if (isGrid40) return `${base} text-[6px] leading-[1.12] line-clamp-2 my-0.2`;
+      return `${base} text-[7.8px] line-clamp-2 my-0.2`;
+    }
+
+    // Default: 'auto' (Intelligent Adaptive Scaling based on character length)
+    if (isLarge) {
+      if (len > 50) return `${base} text-xs sm:text-sm leading-snug line-clamp-3 mb-1`;
+      if (len > 25) return `${base} text-sm sm:text-base leading-snug line-clamp-2 mb-1`;
+      return `${base} text-base sm:text-lg leading-snug line-clamp-2 mb-1`;
+    }
+
+    if (isMedium) {
+      if (len > 40) return `${base} text-[9.5px] line-clamp-3 mb-0.5`;
+      if (len > 20) return `${base} text-[11px] line-clamp-2 mb-0.5`;
+      return `${base} text-xs line-clamp-2 mb-0.5`;
+    }
+
+    if (isThermal80) {
+      if (len > 45) return `${base} text-[8.5px] line-clamp-3 mb-0.5`;
+      if (len > 22) return `${base} text-[10px] line-clamp-2 mb-0.5`;
+      return `${base} text-xs line-clamp-2 mb-0.5`;
+    }
+
+    if (isThermal) {
+      if (len > 35) return `${base} text-[7.5px] line-clamp-3 mb-0.5`;
+      if (len > 18) return `${base} text-[8.5px] line-clamp-2 mb-0.5`;
+      return `${base} text-[9.5px] line-clamp-2 mb-0.5`;
+    }
+
+    if (isGrid12) {
+      if (len > 50) return `${base} text-[8px] line-clamp-3 mb-0.5`;
+      if (len > 25) return `${base} text-[9px] line-clamp-2 mb-0.5`;
+      return `${base} text-[10px] line-clamp-2 mb-0.5`;
+    }
+
+    if (isGrid40) {
+      if (len > 30) return `${base} text-[5px] leading-[1.12] line-clamp-2 my-0.2`;
+      if (len > 16) return `${base} text-[5.8px] leading-[1.12] line-clamp-2 my-0.2`;
+      return `${base} text-[6.5px] leading-[1.12] line-clamp-2 my-0.2`;
+    }
+
+    // Default: grid-24 (A4 standard 3x8, 24 label)
+    if (len > 45) return `${base} text-[6.5px] line-clamp-3 my-0.2`;
+    if (len > 22) return `${base} text-[7.5px] line-clamp-2 my-0.2`;
+    return `${base} text-[8.5px] line-clamp-2 my-0.2`;
   };
 
   const getPageStyle = () => {
@@ -686,22 +766,11 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                             )}
                           </div>
 
-                          {/* Item Name */}
+                          {/* Item Name - Anti-Cutoff Multi-line Adaptive */}
                           {labelConfig.showTitle && (
                             <span
-                              className={`font-black leading-none truncate w-full text-black block shrink-0 ${
-                                isLarge
-                                  ? 'text-sm mb-1'
-                                  : isMedium
-                                  ? 'text-xs mb-0.5'
-                                  : isMid
-                                  ? 'text-[10px] mb-0.5'
-                                  : isGrid12
-                                  ? 'text-[9px] mb-0.5'
-                                  : isGrid40
-                                  ? 'text-[6.5px] my-0.2'
-                                  : 'text-[7.5px] my-0.2'
-                              }`}
+                              className={getItemNameClasses(it.name)}
+                              title={it.name}
                             >
                               {it.name}
                             </span>
@@ -720,7 +789,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                           <div className={`w-full text-black shrink-0 ${isLarge ? 'space-y-1' : 'space-y-0.5'}`}>
                             {labelConfig.showSku && (
                               <span
-                                className={`font-mono font-bold block leading-none truncate ${
+                                className={`font-mono font-bold block leading-tight truncate ${
                                   isLarge
                                     ? 'text-sm tracking-widest'
                                     : isMedium
@@ -741,7 +810,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                             {/* Manual Quantity Content printed on label */}
                             {labelConfig.showQuantity && (
                               <div
-                                className={`font-mono font-bold border border-black/80 rounded-xs bg-slate-50 leading-none ${
+                                className={`font-mono font-bold border border-black/80 rounded-xs bg-slate-50 leading-tight ${
                                   isLarge
                                     ? 'text-xs py-1 px-3 border-2 my-1'
                                     : isMedium
@@ -760,7 +829,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
 
                             {/* Document and location metadata */}
                             <div
-                              className={`flex flex-wrap items-center justify-center gap-x-1 font-mono leading-none truncate ${
+                              className={`flex flex-wrap items-center justify-center gap-x-1 font-mono leading-tight ${
                                 isLarge
                                   ? 'text-xs font-bold mt-0.5'
                                   : isMedium
@@ -1954,6 +2023,59 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                   <span>Harga Satuan</span>
                 </label>
               </div>
+
+              {/* Ukuran Font & Multi-Baris Anti-Potong Controls */}
+              {labelConfig.showTitle && (
+                <div className="p-2.5 bg-indigo-50/70 rounded-xl border border-indigo-100/90 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between gap-1 text-[11px] font-bold text-indigo-900">
+                    <span className="flex items-center gap-1">
+                      <Type className="w-3.5 h-3.5 text-indigo-600" />
+                      Ukuran Teks Nama Barang (Anti-Potong):
+                    </span>
+                    <span className="text-[10px] text-indigo-600 font-normal">
+                      Multi-baris aktif
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setTitleFontSize('auto')}
+                      className={`py-1 px-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                        titleFontSize === 'auto'
+                          ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                      title="Otomatis menyesuaikan ukuran font agar nama barang tidak terpotong sama sekali"
+                    >
+                      Otomatis
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTitleFontSize('standard')}
+                      className={`py-1 px-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                        titleFontSize === 'standard'
+                          ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                      title="Ukuran font standar"
+                    >
+                      Standar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTitleFontSize('compact')}
+                      className={`py-1 px-1.5 rounded-lg text-[11px] font-semibold text-center transition-all cursor-pointer ${
+                        titleFontSize === 'compact'
+                          ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                      title="Ukuran font lebih kecil untuk nama barang yang sangat panjang"
+                    >
+                      Kompak
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1993,7 +2115,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                     QR: {qrValue}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-slate-900">{itemName}</h4>
+                <h4 className="text-sm font-bold text-slate-900 break-words line-clamp-2 leading-snug">{itemName}</h4>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 font-mono">
                   <span className="font-bold text-indigo-700">SKU: {itemSku}</span>
                   <span>•</span>
