@@ -1,10 +1,7 @@
 @import "tailwindcss";
 
 @media print {
-  @page {
-    margin: 4mm 4mm;
-    size: auto;
-  }
+  /* Dynamic page size and margins are handled by the printable modal portal */
 
   /* 1. Reset root documents */
   html,

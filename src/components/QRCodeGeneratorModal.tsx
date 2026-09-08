@@ -489,125 +489,112 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
       case 'single-large':
         return 'flex flex-col items-center justify-center w-full';
       case 'grid-2':
-        return 'grid grid-cols-1 gap-y-[5mm] w-full max-w-[175mm] mx-auto';
+        return 'grid grid-cols-1 gap-y-[5mm] w-full max-w-[170mm] mx-auto';
       case 'grid-4':
-        return 'grid grid-cols-2 gap-x-[4mm] gap-y-[4mm] w-full max-w-[192mm] mx-auto';
+        return 'grid grid-cols-2 gap-x-[4mm] gap-y-[4mm] w-full max-w-[190mm] mx-auto';
       case 'grid-6':
-        return 'grid grid-cols-2 gap-x-[4mm] gap-y-[3mm] w-full max-w-[192mm] mx-auto';
+        return 'grid grid-cols-2 gap-x-[4mm] gap-y-[3mm] w-full max-w-[190mm] mx-auto';
       case 'grid-12':
-        return 'grid grid-cols-2 gap-x-[3mm] gap-y-[2.5mm] w-full max-w-[195mm] mx-auto text-xs';
+        return 'grid grid-cols-2 gap-x-[3.5mm] gap-y-[2.5mm] w-full max-w-[190mm] mx-auto';
       case 'grid-40':
-        return 'grid grid-cols-4 gap-x-[1.2mm] gap-y-[1.2mm] w-full max-w-[198mm] mx-auto text-[7.5px]';
+        return 'grid grid-cols-4 gap-x-[1.5mm] gap-y-[1.2mm] w-full max-w-[192mm] mx-auto';
       case 'thermal':
       case 'thermal-80':
         return 'flex flex-col gap-0 items-center justify-center w-full';
       case 'grid-24':
       default:
-        return 'grid grid-cols-3 gap-x-[2mm] gap-y-[1.8mm] w-full max-w-[198mm] mx-auto text-[8.5px]';
+        return 'grid grid-cols-3 gap-x-[2.5mm] gap-y-[1.8mm] w-full max-w-[192mm] mx-auto';
     }
   };
 
   const getQRSizeForLayout = () => {
     switch (effectiveLayout) {
       case 'single-large':
-        return 110;
+        return 96;
       case 'grid-2':
-        return 85;
+        return 78;
       case 'grid-4':
-        return 72;
+        return 64;
       case 'grid-6':
-        return 62;
+        return 54;
       case 'grid-12':
-        return 52;
+        return 42;
       case 'grid-40':
-        return 32;
+        return 24;
       case 'thermal':
-        return 48;
+        return 38;
       case 'thermal-80':
-        return 60;
+        return 50;
       case 'grid-24':
       default:
-        return 44;
+        return 34;
     }
   };
 
   const getPageStyle = () => {
     if (effectiveLayout === 'thermal') {
       return {
-        height: '38mm',
-        maxHeight: '38mm',
         width: '48mm',
+        minHeight: '38mm',
         margin: '0 auto',
-        padding: 0,
+        padding: '0.5mm',
         boxSizing: 'border-box' as const,
-        overflow: 'hidden',
       };
     }
     if (effectiveLayout === 'thermal-80') {
       return {
-        height: '48mm',
-        maxHeight: '48mm',
         width: '76mm',
+        minHeight: '48mm',
         margin: '0 auto',
-        padding: 0,
+        padding: '0.5mm',
         boxSizing: 'border-box' as const,
-        overflow: 'hidden',
       };
     }
     if (effectiveLayout === 'single-large') {
       return {
-        height: 'auto',
-        maxHeight: '135mm',
         width: '100%',
         margin: '0 auto',
         padding: '6mm 0',
         boxSizing: 'border-box' as const,
-        overflow: 'hidden',
       };
     }
     if (effectiveLayout === 'grid-2') {
       return {
-        height: 'auto',
-        maxHeight: '250mm',
         width: '100%',
         margin: '0 auto',
         padding: '4mm 0',
         boxSizing: 'border-box' as const,
-        overflow: 'hidden',
       };
     }
     return {
-      height: 'auto',
-      maxHeight: '265mm',
       width: '100%',
       margin: '0 auto',
-      padding: 0,
+      padding: '2mm 0',
       boxSizing: 'border-box' as const,
-      overflow: 'hidden',
     };
   };
 
   const getItemClasses = () => {
     switch (effectiveLayout) {
       case 'single-large':
-        return 'w-[155mm] h-[105mm] max-h-[110mm] border-2 border-black rounded-lg p-3 mx-auto';
+        return 'w-[155mm] h-[105mm] border-2 border-black rounded-lg p-3 mx-auto';
       case 'grid-2':
-        return 'w-full h-[115mm] max-h-[118mm] border-2 border-black rounded-md p-3 mx-auto';
+        return 'w-full h-[115mm] border-2 border-black rounded-md p-3 mx-auto';
       case 'grid-4':
-        return 'w-full h-[115mm] max-h-[118mm] border-2 border-black rounded-md p-2.5 mx-auto';
+        return 'w-full h-[115mm] border-2 border-black rounded-md p-2.5 mx-auto';
       case 'grid-6':
-        return 'w-full h-[76mm] max-h-[78mm] border border-black rounded-md p-2 mx-auto';
+        return 'w-full h-[76mm] border border-black rounded-md p-2 mx-auto';
       case 'grid-12':
-        return 'w-full h-[40mm] max-h-[41mm] border border-black rounded-sm p-[1.8mm]';
+        return 'w-full h-[40mm] border border-black rounded-sm p-[2mm]';
       case 'grid-40':
-        return 'w-full h-[24mm] max-h-[24.5mm] border border-black rounded-xs p-[1mm]';
+        return 'w-full h-[23.5mm] border border-black rounded-xs p-[0.8mm]';
       case 'thermal':
-        return 'w-[48mm] h-[38mm] max-h-[38mm] border border-black rounded-xs p-[1.5mm] mx-auto';
+        return 'w-[48mm] h-[38mm] border border-black rounded-xs p-[1.5mm] mx-auto';
       case 'thermal-80':
-        return 'w-[76mm] h-[48mm] max-h-[48mm] border border-black rounded-xs p-[2mm] mx-auto';
+        return 'w-[76mm] h-[48mm] border border-black rounded-xs p-[2mm] mx-auto';
       case 'grid-24':
       default:
-        return 'w-full h-[31.5mm] max-h-[32mm] border border-black rounded-sm p-[1.2mm]';
+        return 'w-full h-[32mm] border border-black rounded-sm p-[1.2mm]';
     }
   };
 
@@ -632,7 +619,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                       : 'A4 portrait'
                   };
                   margin: ${
-                    effectiveLayout.startsWith('thermal') ? '0mm' : '4mm 4mm'
+                    effectiveLayout.startsWith('thermal') ? '1mm' : '6mm 6mm'
                   };
                 }
               }
@@ -649,50 +636,49 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                   }`}
                   style={getPageStyle()}
                 >
-                  <div
-                    className={getGridClasses()}
-                    style={getPageStyle()}
-                  >
+                  <div className={getGridClasses()}>
                     {pageItems.map((it) => {
                       const packInfo = getLabelContentQty(it);
                       const isLarge = effectiveLayout === 'single-large';
                       const isMedium = effectiveLayout === 'grid-2' || effectiveLayout === 'grid-4';
                       const isMid = effectiveLayout === 'grid-6';
+                      const isGrid12 = effectiveLayout === 'grid-12';
+                      const isGrid40 = effectiveLayout === 'grid-40';
 
                       return (
                         <div
                           key={it.uniqueKey}
-                          className={`border border-black rounded-sm flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${getItemClasses()}`}
+                          className={`flex flex-col items-center justify-between text-center bg-white break-inside-avoid page-break-inside-avoid relative box-border overflow-hidden ${getItemClasses()}`}
                         >
                           {/* Distinct Label Header for Inbound / Outbound / General */}
-                          <div className={`w-full ${isLarge ? 'mb-1.5' : 'mb-0.5'}`}>
+                          <div className={`w-full ${isLarge ? 'mb-1.5' : isMedium ? 'mb-1' : 'mb-0.5'} shrink-0`}>
                             {labelCategory === 'IN' ? (
                               <div className={`border-b border-black pb-0.5 flex items-center justify-between px-0.5 ${isLarge ? 'border-b-2 pb-1' : ''}`}>
-                                <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : 'text-[7.5px] font-black'} uppercase tracking-wider text-black flex items-center gap-0.5 leading-none`}>
+                                <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : isGrid40 ? 'text-[6px] font-black' : 'text-[7px] font-black'} uppercase tracking-wider text-black flex items-center gap-0.5 leading-none`}>
                                   <span>▼</span>
                                   <span>BARANG MASUK</span>
                                 </span>
-                                <span className={`${isLarge ? 'text-[10px] font-extrabold border-2' : isMedium ? 'text-[8px] font-bold border' : 'text-[6.5px] font-bold border'} uppercase tracking-tight text-black px-1 rounded-xs leading-none`}>
+                                <span className={`${isLarge ? 'text-[10px] font-extrabold border-2' : isMedium ? 'text-[8px] font-bold border' : isGrid40 ? 'text-[5.5px] font-bold' : 'text-[6px] font-bold border'} uppercase tracking-tight text-black px-0.5 rounded-xs leading-none`}>
                                   PENERIMAAN
                                 </span>
                               </div>
                             ) : labelCategory === 'OUT' ? (
                               <div className={`border-b border-black pb-0.5 flex items-center justify-between px-0.5 ${isLarge ? 'border-b-2 pb-1' : ''}`}>
-                                <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : 'text-[7.5px] font-black'} uppercase tracking-wider text-black flex items-center gap-0.5 leading-none`}>
+                                <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : isGrid40 ? 'text-[6px] font-black' : 'text-[7px] font-black'} uppercase tracking-wider text-black flex items-center gap-0.5 leading-none`}>
                                   <span>▲</span>
                                   <span>BARANG KELUAR</span>
                                 </span>
-                                <span className={`${isLarge ? 'text-[10px] font-extrabold border-2' : isMedium ? 'text-[8px] font-bold border' : 'text-[6.5px] font-bold border'} uppercase tracking-tight text-black px-1 rounded-xs leading-none`}>
-                                  PENGELUARAN / SJ
+                                <span className={`${isLarge ? 'text-[10px] font-extrabold border-2' : isMedium ? 'text-[8px] font-bold border' : isGrid40 ? 'text-[5.5px] font-bold' : 'text-[6px] font-bold border'} uppercase tracking-tight text-black px-0.5 rounded-xs leading-none`}>
+                                  PENGELUARAN
                                 </span>
                               </div>
                             ) : (
                               labelConfig.showBrand && (
                                 <div className={`border-b border-black pb-0.5 flex items-center justify-between px-0.5 ${isLarge ? 'border-b-2 pb-1' : ''}`}>
-                                  <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : 'text-[7px] font-extrabold'} uppercase tracking-wider text-black leading-none`}>
+                                  <span className={`${isLarge ? 'text-xs font-black' : isMedium ? 'text-[10px] font-black' : isGrid40 ? 'text-[6px] font-extrabold' : 'text-[7px] font-extrabold'} uppercase tracking-wider text-black leading-none`}>
                                     PRA LOGISTICS
                                   </span>
-                                  <span className={`${isLarge ? 'text-[10px] font-bold' : 'text-[6.5px] font-bold'} text-black font-mono leading-none`}>
+                                  <span className={`${isLarge ? 'text-[10px] font-bold' : isGrid40 ? 'text-[5.5px] font-bold' : 'text-[6px] font-bold'} text-black font-mono leading-none`}>
                                     RAK STOK
                                   </span>
                                 </div>
@@ -703,16 +689,18 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                           {/* Item Name */}
                           {labelConfig.showTitle && (
                             <span
-                              className={`font-black leading-tight truncate w-full text-black ${
+                              className={`font-black leading-none truncate w-full text-black block shrink-0 ${
                                 isLarge
-                                  ? 'text-base line-clamp-2 my-0.5'
+                                  ? 'text-sm mb-1'
                                   : isMedium
-                                  ? 'text-xs truncate my-0.5'
+                                  ? 'text-xs mb-0.5'
                                   : isMid
-                                  ? 'text-[10px] truncate'
-                                  : effectiveLayout === 'grid-40'
-                                  ? 'text-[7.5px] truncate'
-                                  : 'text-[8.5px] truncate'
+                                  ? 'text-[10px] mb-0.5'
+                                  : isGrid12
+                                  ? 'text-[9px] mb-0.5'
+                                  : isGrid40
+                                  ? 'text-[6.5px] my-0.2'
+                                  : 'text-[7.5px] my-0.2'
                               }`}
                             >
                               {it.name}
@@ -720,7 +708,7 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                           )}
 
                           {/* QR Code Renderer */}
-                          <div className="my-0.5 flex items-center justify-center shrink-0">
+                          <div className="my-auto flex items-center justify-center shrink-0">
                             <QRCodeRenderer
                               value={it.encodedQr}
                               size={getQRSizeForLayout()}
@@ -729,19 +717,21 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                           </div>
 
                           {/* Footer Details */}
-                          <div className={`w-full text-black ${isLarge ? 'space-y-1' : 'space-y-0.5'}`}>
+                          <div className={`w-full text-black shrink-0 ${isLarge ? 'space-y-1' : 'space-y-0.5'}`}>
                             {labelConfig.showSku && (
                               <span
-                                className={`font-mono font-black block leading-tight truncate ${
+                                className={`font-mono font-bold block leading-none truncate ${
                                   isLarge
                                     ? 'text-sm tracking-widest'
                                     : isMedium
                                     ? 'text-xs tracking-wider'
                                     : isMid
-                                    ? 'text-[9.5px] tracking-wider'
-                                    : effectiveLayout === 'grid-40'
-                                    ? 'text-[7px]'
-                                    : 'text-[8px] tracking-wider'
+                                    ? 'text-[9px] tracking-wider'
+                                    : isGrid12
+                                    ? 'text-[8.5px] tracking-wider'
+                                    : isGrid40
+                                    ? 'text-[6px]'
+                                    : 'text-[7.5px] tracking-wider'
                                 }`}
                               >
                                 {it.sku}
@@ -751,31 +741,35 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
                             {/* Manual Quantity Content printed on label */}
                             {labelConfig.showQuantity && (
                               <div
-                                className={`font-mono font-bold border border-black/80 rounded-xs bg-slate-50 leading-tight ${
+                                className={`font-mono font-bold border border-black/80 rounded-xs bg-slate-50 leading-none ${
                                   isLarge
                                     ? 'text-xs py-1 px-3 border-2 my-1'
                                     : isMedium
-                                    ? 'text-[9.5px] py-0.5 px-2 my-0.5'
-                                    : effectiveLayout === 'grid-40'
-                                    ? 'text-[6px] py-0.2 px-0.5'
-                                    : 'text-[6.5px] py-0.2 px-1 my-0.2'
+                                    ? 'text-[9px] py-0.5 px-2 my-0.5'
+                                    : isGrid12
+                                    ? 'text-[7.5px] py-0.5 px-1.5'
+                                    : isGrid40
+                                    ? 'text-[5px] py-[1px] px-0.5'
+                                    : 'text-[6px] py-[1px] px-1'
                                 }`}
                               >
-                                <span>ISI / JUMLAH: </span>
+                                <span>ISI: </span>
                                 <span className="font-black underline">{packInfo.text}</span>
                               </div>
                             )}
 
                             {/* Document and location metadata */}
                             <div
-                              className={`flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0 font-mono leading-tight truncate ${
+                              className={`flex flex-wrap items-center justify-center gap-x-1 font-mono leading-none truncate ${
                                 isLarge
-                                  ? 'text-xs font-bold'
+                                  ? 'text-xs font-bold mt-0.5'
                                   : isMedium
-                                  ? 'text-[9px] font-semibold'
-                                  : effectiveLayout === 'grid-40'
-                                  ? 'text-[5.5px]'
-                                  : 'text-[6px]'
+                                  ? 'text-[8.5px] font-semibold'
+                                  : isGrid12
+                                  ? 'text-[7px]'
+                                  : isGrid40
+                                  ? 'text-[5px]'
+                                  : 'text-[5.5px]'
                               }`}
                             >
                               {labelConfig.showDocNumber && docNumber && (
@@ -2034,6 +2028,16 @@ export const QRCodeGeneratorModal: React.FC<QRCodeGeneratorModalProps> = ({
               )}
               {copied ? 'Tersalin!' : 'Salin Kode QR'}
             </button>
+          </div>
+        </div>
+
+        {/* Anti-Cutoff Print Guidance Tip */}
+        <div className="mx-6 mb-4 px-3.5 py-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-3 text-xs text-emerald-900">
+          <div className="flex items-center gap-2">
+            <span className="text-emerald-600 font-extrabold text-sm">✓</span>
+            <span>
+              <strong>Format Anti-Terpotong Aktif:</strong> Dimensi QR dan margin telah dioptimalkan presisi. Pada dialog print browser, pilih ukuran kertas <strong>{effectiveLayout.startsWith('thermal') ? 'Thermal Roll' : 'A4'}</strong> dan Margin <strong>Default / Minimum</strong>.
+            </span>
           </div>
         </div>
 
